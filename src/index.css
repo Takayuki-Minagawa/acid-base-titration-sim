@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-surface2: #f1f3f5;
+  --color-border: #dee2e6;
+  --color-text: #212529;
+  --color-text-muted: #6c757d;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+}
+
+.dark {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface2: #334155;
+  --color-border: #475569;
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-accent: #60a5fa;
+  --color-accent-hover: #93c5fd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input[type='range'] {
+  accent-color: var(--color-accent);
+}
+
+/* ── Layout grid ── */
+.layout-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 220px 1fr 280px;
+  grid-template-rows: minmax(220px, 1fr) minmax(240px, 1fr);
+  grid-template-areas:
+    "controls experiment ions"
+    "controls curve     learning";
+}
+
+.panel-controls   { grid-area: controls; }
+.panel-experiment { grid-area: experiment; }
+.panel-curve      { grid-area: curve; }
+.panel-ions       { grid-area: ions; }
+.panel-learning   { grid-area: learning; }
+
+/* Tablet: 2-column */
+@media (max-width: 900px) {
+  .layout-grid {
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "controls experiment"
+      "controls ions"
+      "curve    curve"
+      "learning learning";
+  }
+}
+
+/* Mobile: single column */
+@media (max-width: 600px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "controls"
+      "experiment"
+      "curve"
+      "ions"
+      "learning";
+  }
+}

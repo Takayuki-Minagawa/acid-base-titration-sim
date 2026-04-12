@@ -1,0 +1,121 @@
+{
+  "title": "Acid-Base Titration Simulator",
+  "subtitle": "Observe pH changes in real time",
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "lang": "日本語",
+  "controls": {
+    "title": "Experiment Settings",
+    "sample": "Sample (Beaker)",
+    "titrant": "Titrant (Burette)",
+    "acid": "Acid",
+    "base": "Base",
+    "concentration": "Concentration (mol/L)",
+    "volume": "Volume (mL)",
+    "dropSpeed": "Drop Speed (mL/s)",
+    "indicator": "Indicator",
+    "none": "None",
+    "methylOrange": "Methyl Orange",
+    "btb": "BTB",
+    "phenolphthalein": "Phenolphthalein",
+    "reset": "Reset",
+    "play": "Play",
+    "pause": "Pause",
+    "added": "Added",
+    "currentPH": "Current pH",
+    "status": {
+      "before": "Before",
+      "running": "Running",
+      "done": "Done"
+    }
+  },
+  "graph": {
+    "title": "Titration Curve",
+    "xLabel": "Volume Added (mL)",
+    "yLabel": "pH",
+    "equivalencePoint": "Equiv. Point",
+    "indicatorRange": "Indicator Range",
+    "suitable": "Suitable",
+    "unsuitable": "Unsuitable"
+  },
+  "ions": {
+    "title": "Ion Concentrations",
+    "hPlus": "[H⁺]",
+    "ohMinus": "[OH⁻]",
+    "acid": "[Acid]",
+    "base": "[Base]",
+    "salt": "[Salt]",
+    "bufferRegion": "Buffer Region"
+  },
+  "experiment": {
+    "title": "Experiment View",
+    "burette": "Burette",
+    "beaker": "Beaker",
+    "phMeter": "pH Meter",
+    "equivalenceReached": "Equivalence Point Reached!"
+  },
+  "learning": {
+    "title": "Learning Panel",
+    "tabs": {
+      "explanation": "Explanation",
+      "quiz": "Quiz"
+    },
+    "explanation": {
+      "initial": {
+        "strong_strong": "In a strong acid–strong base titration, the equivalence point occurs at pH = 7.0. The curve shows a sharp pH change near the equivalence point.",
+        "strong_weak": "In a strong acid–weak base titration, hydrolysis of the conjugate acid makes the equivalence point pH < 7. Methyl orange is an appropriate indicator.",
+        "weak_strong": "In a weak acid–strong base titration, hydrolysis of the conjugate base makes the equivalence point pH > 7. Phenolphthalein is the appropriate indicator.",
+        "weak_weak": "In a weak acid–weak base titration, the equivalence point pH depends on the relative strengths of the acid and base. The pH change near the equivalence point is gradual."
+      },
+      "buffer": "Buffer region: Before the equivalence point, a region of gradual pH change appears where the weak acid and its conjugate base coexist (Henderson–Hasselbalch equation).",
+      "equivalence": "Equivalence point: The point where acid and base are completely neutralized. Detected where dpH/dV is maximum.",
+      "indicator": "Indicator selection: Choose an indicator whose color-change range includes the equivalence point.",
+      "nearEquivalence": "Approaching the equivalence point! Watch for the sharp pH change.",
+      "afterEquivalence": "Past the equivalence point. Excess base causes rising pH."
+    },
+    "quiz": {
+      "q1": {
+        "question": "What is the pH at the equivalence point of a strong acid–strong base titration?",
+        "options": ["pH = 7.0", "pH < 7.0", "pH > 7.0", "Depends on conditions"],
+        "answer": 0,
+        "explanation": "The salt produced (e.g. NaCl) does not hydrolyze, so the equivalence point is exactly pH = 7.0."
+      },
+      "q2": {
+        "question": "Which indicator is best for a weak acid–strong base titration?",
+        "options": ["Methyl orange (3.1–4.4)", "BTB (6.0–7.6)", "Phenolphthalein (8.3–10.0)", "All the same"],
+        "answer": 2,
+        "explanation": "The equivalence point is pH > 7 (alkaline). Phenolphthalein's range (8.3–10.0) covers this, making it most suitable."
+      },
+      "q3": {
+        "question": "When is a buffer solution formed during titration?",
+        "options": ["Before titration", "Before/after equiv. point (weak acid + conjugate base)", "Exactly at equiv. point", "After equiv. point"],
+        "answer": 1,
+        "explanation": "When a weak acid and its conjugate base (salt) coexist, the solution resists pH change — buffer action described by the Henderson–Hasselbalch equation."
+      },
+      "q4": {
+        "question": "What is the pH at the equivalence point when 100 mL of 0.1 mol/L CH₃COOH (Ka = 1.8×10⁻⁵) is titrated with 0.1 mol/L NaOH?",
+        "options": ["pH = 7.0", "pH ≈ 8.9", "pH ≈ 5.1", "pH = 14"],
+        "answer": 1,
+        "explanation": "At the equivalence point, only CH₃COONa exists. Kb = Kw/Ka ≈ 5.6×10⁻¹⁰; [OH⁻] = √(0.1 × 5.6×10⁻¹⁰) ≈ 7.5×10⁻⁶ → pOH ≈ 5.1 → pH ≈ 8.9"
+      }
+    },
+    "correct": "Correct!",
+    "incorrect": "Incorrect",
+    "showAnswer": "Show explanation",
+    "nextQuestion": "Next question",
+    "score": "Score"
+  },
+  "acids": {
+    "HCl": "Hydrochloric acid (HCl)",
+    "H2SO4": "Sulfuric acid (H₂SO₄)",
+    "CH3COOH": "Acetic acid (CH₃COOH)",
+    "H3PO4": "Phosphoric acid (H₃PO₄)"
+  },
+  "bases": {
+    "NaOH": "Sodium hydroxide (NaOH)",
+    "KOH": "Potassium hydroxide (KOH)",
+    "NH3": "Ammonia (NH₃)"
+  }
+}
