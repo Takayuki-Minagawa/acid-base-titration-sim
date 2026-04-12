@@ -20,6 +20,8 @@
     "methylOrange": "Methyl Orange",
     "btb": "BTB",
     "phenolphthalein": "Phenolphthalein",
+    "titrantConc": "Titrant conc. (mol/L)",
+    "exportCsv": "Export CSV",
     "reset": "Reset",
     "play": "Play",
     "pause": "Pause",

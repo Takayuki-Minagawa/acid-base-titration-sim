@@ -20,6 +20,8 @@
     "methylOrange": "メチルオレンジ",
     "btb": "BTB",
     "phenolphthalein": "フェノールフタレイン",
+    "titrantConc": "濃度 (滴下液, mol/L)",
+    "exportCsv": "CSV エクスポート",
     "reset": "リセット",
     "play": "再生",
     "pause": "一時停止",

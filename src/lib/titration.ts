@@ -33,12 +33,14 @@ export function buildCurve(cfg: TitrationConfig): TitrationPoint[] {
   const equivVol = sampleMol / titrantConc * 1000 // mL
   const maxVol = equivVol * 2.2
 
-  const step = Math.max(0.05, maxVol / 500)
+  // Use 0.05 mL step for smooth curves (≤2200 points for typical ranges)
+  const step = Math.min(0.05, maxVol / 200)
   const points: TitrationPoint[] = []
 
-  for (let v = 0; v <= maxVol; v += step) {
-    const ph = calcPH(cfg, v)
-    points.push({ volume: parseFloat(v.toFixed(3)), ph: clampPH(ph) })
+  for (let v = 0; v <= maxVol + step * 0.5; v += step) {
+    const vol = parseFloat(Math.min(v, maxVol).toFixed(3))
+    const ph = calcPH(cfg, vol)
+    points.push({ volume: vol, ph: clampPH(ph) })
   }
 
   return points

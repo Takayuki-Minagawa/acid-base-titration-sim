@@ -15,10 +15,10 @@ interface BarProps {
   label: string
   value: number
   color: string
-  isBuffer?: boolean
+  highlight?: boolean
 }
 
-function IonBar({ label, value, color, isBuffer }: BarProps) {
+function IonBar({ label, value, color, highlight }: BarProps) {
   const fraction = logScale(value)
   const logVal = Math.log10(Math.max(value, 1e-15))
 
@@ -27,10 +27,16 @@ function IonBar({ label, value, color, isBuffer }: BarProps) {
       <span className="text-xs w-14 text-right shrink-0" style={{ color: 'var(--color-text-muted)' }}>
         {label}
       </span>
-      <div className="flex-1 h-4 rounded overflow-hidden" style={{ background: 'var(--color-surface2)' }}>
+      <div
+        className="flex-1 h-4 rounded overflow-hidden"
+        style={{
+          background: 'var(--color-surface2)',
+          outline: highlight ? `1.5px solid ${color}` : 'none',
+        }}
+      >
         <div
-          className="h-full rounded transition-all duration-200"
-          style={{ width: `${fraction * 100}%`, background: color, opacity: isBuffer ? 1 : 0.8 }}
+          className="h-full rounded transition-all duration-150"
+          style={{ width: `${fraction * 100}%`, background: color, opacity: highlight ? 1 : 0.7 }}
         />
       </div>
       <span className="text-xs w-20 shrink-0 font-mono" style={{ color: 'var(--color-text)' }}>
@@ -46,26 +52,37 @@ export default function IonPanel() {
 
   const { hPlus, ohMinus } = ionConcentrations(state.currentPH)
 
-  // Detect buffer region: near half-equiv volume and weak acid/base
-  const { equivVol, addedVol, acidId, baseId } = state
+  const { equivVol, addedVol, acidId, baseId, acidInBeaker } = state
   const isWeakAcid = acidId === 'CH3COOH' || acidId === 'H3PO4'
   const isWeakBase = baseId === 'NH3'
-  const halfEquiv = equivVol * 0.5
+
+  // Buffer region: weak species present on BOTH sides of equivalence
   const inBufferRegion =
-    (isWeakAcid || isWeakBase) &&
-    addedVol > halfEquiv * 0.2 &&
+    (acidInBeaker ? (isWeakAcid && !isWeakBase) : (isWeakBase && !isWeakAcid)) &&
+    addedVol > equivVol * 0.05 &&
     addedVol < equivVol * 0.98
 
-  // Approximate acid and conjugate base concentrations
-  const { acidMol, baseMol } = useMemo(() => {
+  // Species concentrations (mol/L) — corrected for acidInBeaker direction
+  const { weakSpecies, conjugate } = useMemo(() => {
     const sampleMol = state.sampleConc * (state.sampleVol / 1000)
     const addedMol = state.titrantConc * (state.addedVol / 1000)
     const total = (state.sampleVol + state.addedVol) / 1000
-    return {
-      acidMol: Math.max(0, sampleMol - addedMol) / total,
-      baseMol: Math.max(0, addedMol - sampleMol) / total + (addedMol < sampleMol ? addedMol / total : 0),
+
+    if (state.acidInBeaker) {
+      // Acid (HA) in beaker, base added → HA decreases, A⁻ increases
+      const ha = Math.max(0, sampleMol - addedMol) / total
+      const aConj = Math.min(addedMol, sampleMol) / total
+      return { weakSpecies: ha, conjugate: aConj }
+    } else {
+      // Base (B) in beaker, acid added → B decreases, BH⁺ increases
+      const b = Math.max(0, sampleMol - addedMol) / total
+      const bh = Math.min(addedMol, sampleMol) / total
+      return { weakSpecies: b, conjugate: bh }
     }
   }, [state])
+
+  const weakLabel = acidInBeaker ? t('ions.acid') : t('ions.base')
+  const conjLabel = acidInBeaker ? '[A⁻]' : '[BH⁺]'
 
   return (
     <div
@@ -92,12 +109,12 @@ export default function IonPanel() {
         <span className="text-xs w-20" />
       </div>
 
-      <IonBar label={t('ions.hPlus')} value={hPlus} color="#ef4444" />
-      <IonBar label={t('ions.ohMinus')} value={ohMinus} color="#3b82f6" />
-      <IonBar label={t('ions.acid')} value={acidMol} color="#f97316" isBuffer={inBufferRegion} />
-      <IonBar label={t('ions.base')} value={baseMol} color="#8b5cf6" isBuffer={inBufferRegion} />
+      <IonBar label={t('ions.hPlus')}   value={hPlus}        color="#ef4444" />
+      <IonBar label={t('ions.ohMinus')} value={ohMinus}      color="#3b82f6" />
+      <IonBar label={weakLabel}         value={weakSpecies}  color="#f97316" highlight={inBufferRegion} />
+      <IonBar label={conjLabel}         value={conjugate}    color="#8b5cf6" highlight={inBufferRegion} />
 
-      {/* Current pH display */}
+      {/* pH readout */}
       <div className="mt-1 flex justify-between text-xs" style={{ color: 'var(--color-text-muted)' }}>
         <span>pH = {state.currentPH.toFixed(2)}</span>
         <span>[H⁺] = {hPlus.toExponential(2)}</span>
@@ -105,7 +122,7 @@ export default function IonPanel() {
       </div>
 
       {inBufferRegion && (
-        <div className="text-xs mt-1 p-2 rounded" style={{ background: '#22c55e11', color: '#16a34a' }}>
+        <div className="text-xs p-2 rounded" style={{ background: '#22c55e11', color: '#16a34a' }}>
           Henderson–Hasselbalch: pH = pKa + log([A⁻]/[HA])
         </div>
       )}
