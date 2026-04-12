@@ -27,10 +27,7 @@ export interface TitrationConfig {
  * Step: 0.1 mL up to 2× the equivalence volume.
  */
 export function buildCurve(cfg: TitrationConfig): TitrationPoint[] {
-  const { sampleConc, sampleVol, titrantConc } = cfg
-
-  const sampleMol = sampleConc * (sampleVol / 1000)
-  const equivVol = sampleMol / titrantConc * 1000 // mL
+  const equivVol = equivalenceVolume(cfg)
   const maxVol = equivVol * 2.2
 
   // Use 0.05 mL step for smooth curves (≤2200 points for typical ranges)
