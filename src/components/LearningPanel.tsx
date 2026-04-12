@@ -62,7 +62,7 @@ function ExplanationTab({ explanation }: { explanation: string[] }) {
 }
 
 function buildExplanation(state: ReturnType<typeof useSim>['state'], t: (k: string) => string): string[] {
-  const { acidId, baseId, addedVol, equivVol } = state
+  const { acidId, baseId, addedVol, equivVol, acidInBeaker } = state
 
   const isWeakAcid = acidId === 'CH3COOH' || acidId === 'H3PO4'
   const isWeakBase = baseId === 'NH3'
@@ -75,8 +75,10 @@ function buildExplanation(state: ReturnType<typeof useSim>['state'], t: (k: stri
 
   const lines: string[] = [t(`learning.explanation.initial.${typeKey}`)]
 
-  if (isWeakAcid || isWeakBase) {
-    lines.push(t('learning.explanation.buffer'))
+  // Buffer description depends on which species is the weak sample
+  const weakSamplePresent = acidInBeaker ? isWeakAcid : isWeakBase
+  if (weakSamplePresent) {
+    lines.push(t(acidInBeaker ? 'learning.explanation.buffer' : 'learning.explanation.buffer_base'))
   }
 
   lines.push(t('learning.explanation.equivalence'))
@@ -86,7 +88,8 @@ function buildExplanation(state: ReturnType<typeof useSim>['state'], t: (k: stri
   }
 
   if (addedVol > equivVol * 1.1) {
-    lines.push(t('learning.explanation.afterEquivalence'))
+    // After equivalence: excess base raises pH (acid in beaker) or excess acid lowers pH (base in beaker)
+    lines.push(t(acidInBeaker ? 'learning.explanation.afterEquivalence' : 'learning.explanation.afterEquivalenceExcessAcid'))
   }
 
   lines.push(t('learning.explanation.indicator'))

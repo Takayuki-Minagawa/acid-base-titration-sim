@@ -2,8 +2,11 @@ import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSim } from '../context/SimContext'
 import { ACIDS } from '../data/acids'
+import type { AcidId } from '../data/acids'
 import { BASES } from '../data/bases'
+import type { BaseId } from '../data/bases'
 import { INDICATORS } from '../data/indicators'
+import type { IndicatorId } from '../data/indicators'
 
 export default function ControlPanel() {
   const { t } = useTranslation()
@@ -77,11 +80,11 @@ export default function ControlPanel() {
           {t('controls.sample')} ({state.acidInBeaker ? t('controls.acid') : t('controls.base')})
         </label>
         {state.acidInBeaker ? (
-          <select style={sStyle} value={state.acidId} onChange={e => dispatch({ type: 'SET_ACID', id: e.target.value as any })}>
+          <select style={sStyle} value={state.acidId} onChange={e => dispatch({ type: 'SET_ACID', id: e.target.value as AcidId })}>
             {ACIDS.map(a => <option key={a.id} value={a.id}>{t(a.nameKey)}</option>)}
           </select>
         ) : (
-          <select style={sStyle} value={state.baseId} onChange={e => dispatch({ type: 'SET_BASE', id: e.target.value as any })}>
+          <select style={sStyle} value={state.baseId} onChange={e => dispatch({ type: 'SET_BASE', id: e.target.value as BaseId })}>
             {BASES.map(b => <option key={b.id} value={b.id}>{t(b.nameKey)}</option>)}
           </select>
         )}
@@ -93,11 +96,11 @@ export default function ControlPanel() {
           {t('controls.titrant')} ({state.acidInBeaker ? t('controls.base') : t('controls.acid')})
         </label>
         {state.acidInBeaker ? (
-          <select style={sStyle} value={state.baseId} onChange={e => dispatch({ type: 'SET_BASE', id: e.target.value as any })}>
+          <select style={sStyle} value={state.baseId} onChange={e => dispatch({ type: 'SET_BASE', id: e.target.value as BaseId })}>
             {BASES.map(b => <option key={b.id} value={b.id}>{t(b.nameKey)}</option>)}
           </select>
         ) : (
-          <select style={sStyle} value={state.acidId} onChange={e => dispatch({ type: 'SET_ACID', id: e.target.value as any })}>
+          <select style={sStyle} value={state.acidId} onChange={e => dispatch({ type: 'SET_ACID', id: e.target.value as AcidId })}>
             {ACIDS.map(a => <option key={a.id} value={a.id}>{t(a.nameKey)}</option>)}
           </select>
         )}
@@ -125,7 +128,7 @@ export default function ControlPanel() {
         <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
           {t('controls.indicator')}
         </label>
-        <select style={sStyle} value={state.indicatorId} onChange={e => dispatch({ type: 'SET_INDICATOR', id: e.target.value as any })}>
+        <select style={sStyle} value={state.indicatorId} onChange={e => dispatch({ type: 'SET_INDICATOR', id: e.target.value as IndicatorId })}>
           {INDICATORS.map(ind => <option key={ind.id} value={ind.id}>{t(ind.nameKey)}</option>)}
         </select>
       </div>

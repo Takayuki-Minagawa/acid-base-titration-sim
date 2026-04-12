@@ -53,9 +53,9 @@ export function calcPH(cfg: TitrationConfig, addedML: number): number {
   const sampleMol = sampleConc * (sampleVol / 1000)
 
   if (cfg.acidInBeaker) {
-    // Acid in beaker, base added
+    // Acid in beaker, base added — scale acid by valence (e.g. H₂SO₄ provides 2 H⁺/mol)
     return computePH(
-      sampleMol,
+      sampleMol * acid.valence,
       addedMol,
       totalVolL,
       acid.pKa,
@@ -64,9 +64,9 @@ export function calcPH(cfg: TitrationConfig, addedML: number): number {
       base.pKb ?? 4.74,
     )
   } else {
-    // Base in beaker, acid added — invert perspective
+    // Base in beaker, acid added — scale acid titrant by valence
     return computePH(
-      addedMol,
+      addedMol * acid.valence,
       sampleMol,
       totalVolL,
       acid.pKa,
@@ -106,8 +106,14 @@ export function findEquivalencePoints(points: TitrationPoint[]): EquivalencePoin
   return peaks
 }
 
-/** Volume at equivalence (theoretical) */
+/** Volume at equivalence (theoretical), accounting for acid valence */
 export function equivalenceVolume(cfg: TitrationConfig): number {
   const sampleMol = cfg.sampleConc * (cfg.sampleVol / 1000)
-  return (sampleMol / cfg.titrantConc) * 1000
+  if (cfg.acidInBeaker) {
+    // need titrant moles = acid equiv moles
+    return (sampleMol * cfg.acid.valence / cfg.titrantConc) * 1000
+  } else {
+    // need acid equiv moles = base moles  →  titrantVol = sampleMol / (titrantConc * acid.valence)
+    return (sampleMol / (cfg.titrantConc * cfg.acid.valence)) * 1000
+  }
 }

@@ -71,11 +71,13 @@
         "weak_strong": "In a weak acid–strong base titration, hydrolysis of the conjugate base makes the equivalence point pH > 7. Phenolphthalein is the appropriate indicator.",
         "weak_weak": "In a weak acid–weak base titration, the equivalence point pH depends on the relative strengths of the acid and base. The pH change near the equivalence point is gradual."
       },
-      "buffer": "Buffer region: Before the equivalence point, a region of gradual pH change appears where the weak acid and its conjugate base coexist (Henderson–Hasselbalch equation).",
+      "buffer": "Buffer region: Before the equivalence point, a region of gradual pH change appears where the weak acid and its conjugate base (A⁻) coexist (Henderson–Hasselbalch equation).",
+      "buffer_base": "Buffer region: Before the equivalence point, a region of gradual pH change appears where the weak base and its conjugate acid (BH⁺) coexist (Henderson–Hasselbalch equation).",
       "equivalence": "Equivalence point: The point where acid and base are completely neutralized. Detected where dpH/dV is maximum.",
       "indicator": "Indicator selection: Choose an indicator whose color-change range includes the equivalence point.",
       "nearEquivalence": "Approaching the equivalence point! Watch for the sharp pH change.",
-      "afterEquivalence": "Past the equivalence point. Excess base causes rising pH."
+      "afterEquivalence": "Past the equivalence point. Excess base causes rising pH.",
+      "afterEquivalenceExcessAcid": "Past the equivalence point. Excess acid causes falling pH."
     },
     "quiz": {
       "q1": {
@@ -113,7 +115,7 @@
     "HCl": "Hydrochloric acid (HCl)",
     "H2SO4": "Sulfuric acid (H₂SO₄)",
     "CH3COOH": "Acetic acid (CH₃COOH)",
-    "H3PO4": "Phosphoric acid (H₃PO₄)"
+    "H3PO4": "Phosphoric acid (H₃PO₄, 1st step)"
   },
   "bases": {
     "NaOH": "Sodium hydroxide (NaOH)",

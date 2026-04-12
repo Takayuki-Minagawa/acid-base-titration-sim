@@ -39,7 +39,7 @@ export const INDICATORS: Indicator[] = [
     nameKey: 'controls.phenolphthalein',
     pHLow: 8.3,
     pHHigh: 10.0,
-    colorAcid: 'transparent',
+    colorAcid: '#d946ef00', // transparent magenta (colorless in acid)
     colorBase: '#d946ef',   // magenta
   },
 ]
@@ -62,17 +62,20 @@ export function getSolutionColor(ph: number, indicator: Indicator): string {
   return blendColors(colorAcid, colorBase, t)
 }
 
-function hexToRgb(hex: string): [number, number, number] | null {
-  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex)
-  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null
+function hexToRgba(hex: string): [number, number, number, number] | null {
+  const m8 = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex)
+  if (m8) return [parseInt(m8[1], 16), parseInt(m8[2], 16), parseInt(m8[3], 16), parseInt(m8[4], 16) / 255]
+  const m6 = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex)
+  return m6 ? [parseInt(m6[1], 16), parseInt(m6[2], 16), parseInt(m6[3], 16), 1] : null
 }
 
 function blendColors(c1: string, c2: string, t: number): string {
-  const r1 = hexToRgb(c1)
-  const r2 = hexToRgb(c2)
+  const r1 = hexToRgba(c1)
+  const r2 = hexToRgba(c2)
   if (!r1 || !r2) return c2
   const r = Math.round(r1[0] + (r2[0] - r1[0]) * t)
   const g = Math.round(r1[1] + (r2[1] - r1[1]) * t)
   const b = Math.round(r1[2] + (r2[2] - r1[2]) * t)
-  return `rgb(${r},${g},${b})`
+  const a = +(r1[3] + (r2[3] - r1[3]) * t).toFixed(3)
+  return `rgba(${r},${g},${b},${a})`
 }

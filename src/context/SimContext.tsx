@@ -240,6 +240,7 @@ export function SimProvider({ children }: { children: ReactNode }) {
   return <SimContext.Provider value={{ state, dispatch }}>{children}</SimContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSim() {
   return useContext(SimContext)
 }

@@ -123,7 +123,9 @@ export default function IonPanel() {
 
       {inBufferRegion && (
         <div className="text-xs p-2 rounded" style={{ background: '#22c55e11', color: '#16a34a' }}>
-          Henderson–Hasselbalch: pH = pKa + log([A⁻]/[HA])
+          {acidInBeaker
+            ? 'Henderson–Hasselbalch: pH = pKa + log([A⁻]/[HA])'
+            : 'Henderson–Hasselbalch: pOH = pKb + log([BH⁺]/[B])'}
         </div>
       )}
     </div>
