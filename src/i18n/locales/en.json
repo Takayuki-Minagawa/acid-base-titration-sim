@@ -1,5 +1,6 @@
 {
   "title": "Acid-Base Titration Simulator",
+  "titleShort": "Titration Sim",
   "subtitle": "Observe pH changes in real time",
   "theme": {
     "light": "Light",
@@ -43,8 +44,6 @@
     },
     "oneDrop": "1 drop",
     "oneDropAria": "Add a single drop (0.05 mL)",
-    "indicatorRange": "Range",
-    "colorless": "colourless",
     "playback": "Titration controls",
     "slow": "Slow",
     "fast": "Fast",
@@ -74,7 +73,7 @@
     "logScale": "Log scale (×10 per step)",
     "dominantAcid": "[H⁺] exceeds [OH⁻] → acidic",
     "dominantBase": "[OH⁻] exceeds [H⁺] → basic",
-    "dominantNeutral": "[H⁺] ≈ [OH⁻] → neutral",
+    "dominantNeutral": "pH close to 7 → roughly neutral ([H⁺] and [OH⁻] are close)",
     "formula": "Henderson–Hasselbalch"
   },
   "experiment": {
@@ -83,8 +82,7 @@
     "beaker": "Beaker",
     "phMeter": "pH Meter",
     "equivalenceReached": "Equivalence Point Reached!",
-    "ariaLabel": "Experiment: beaker pH {{ph}}, {{vol}} mL added",
-    "added": "Added"
+    "ariaLabel": "Experiment: beaker pH {{ph}}, {{vol}} mL added"
   },
   "learning": {
     "title": "Learning Panel",

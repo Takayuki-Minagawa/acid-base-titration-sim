@@ -1,7 +1,7 @@
 import { useId, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSim } from '../context/SimContext'
-import { DROP_VOLUME, maxVolume } from '../lib/stage'
+import { DROP_VOLUME, maxVolume, seekStep, volDecimals } from '../lib/stage'
 import { DropIcon, PauseIcon, PlayIcon, ResetIcon } from './Icons'
 
 /** Play / pause, single drop, reset — shared by the experiment panel and the mobile dock */
@@ -19,8 +19,8 @@ export function PlaybackButtons({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2 flex-1">
       <button
-        className={`btn ${running ? 'btn-pause' : 'btn-primary'} ${compact ? '' : 'flex-[1.4]'}`}
-        style={compact ? { minWidth: 96 } : { minHeight: 44 }}
+        className={`btn ${running ? 'btn-pause' : 'btn-primary'} ${compact ? 'flex-1 min-w-0' : 'flex-[1.4]'}`}
+        style={compact ? undefined : { minHeight: 44 }}
         onClick={() => dispatch({ type: running ? 'PAUSE' : 'PLAY' })}
         disabled={done}
       >
@@ -28,7 +28,7 @@ export function PlaybackButtons({ compact = false }: { compact?: boolean }) {
         {running ? t('controls.pause') : t('controls.play')}
       </button>
       <button
-        className="btn btn-ghost flex-1"
+        className={`btn btn-ghost flex-1 ${compact ? 'min-w-0' : ''}`}
         style={compact ? undefined : { minHeight: 44 }}
         onClick={addDrop}
         disabled={running || state.addedVol >= maxVol}
@@ -36,7 +36,7 @@ export function PlaybackButtons({ compact = false }: { compact?: boolean }) {
         title={t('controls.oneDropAria')}
       >
         <DropIcon size={16} />
-        {t('controls.oneDrop')}
+        <span className={compact ? 'hidden min-[360px]:inline' : undefined}>{t('controls.oneDrop')}</span>
       </button>
       <button
         className={`btn btn-ghost ${compact ? 'btn-icon' : 'flex-1 min-w-[44px]'}`}
@@ -59,6 +59,7 @@ export function SeekSlider() {
   const id = useId()
   const maxVol = maxVolume(state)
   const pct = (state.addedVol / maxVol) * 100
+  const dec = volDecimals(maxVol)
 
   return (
     <div className="flex flex-col gap-1">
@@ -67,7 +68,7 @@ export function SeekSlider() {
           {t('controls.added')}
         </label>
         <span className="mono text-sm font-bold" style={{ color: 'var(--color-text)' }}>
-          {state.addedVol.toFixed(2)} <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>/ {maxVol.toFixed(1)} mL</span>
+          {state.addedVol.toFixed(Math.max(2, dec))} <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>/ {maxVol.toFixed(Math.max(1, dec))} mL</span>
         </span>
       </div>
       <div className="relative">
@@ -77,11 +78,11 @@ export function SeekSlider() {
           className="range"
           min={0}
           max={maxVol}
-          step={DROP_VOLUME}
+          step={seekStep(maxVol)}
           value={state.addedVol}
           style={{ '--fill': `${pct}%` } as CSSProperties}
           onChange={e => dispatch({ type: 'SEEK', vol: parseFloat(e.target.value) })}
-          aria-valuetext={`${state.addedVol.toFixed(2)} mL`}
+          aria-valuetext={`${state.addedVol.toFixed(Math.max(2, dec))} mL`}
         />
         {state.equivalencePoints.map((ep, i) => (
           <span

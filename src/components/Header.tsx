@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../context/ThemeContext'
 import { useProgress } from '../context/ProgressContext'
@@ -10,12 +10,25 @@ export default function Header({ onHelp }: { onHelp: () => void }) {
   const { t, i18n } = useTranslation()
   const { theme, toggleTheme } = useTheme()
 
+  const headerRef = useRef<HTMLElement>(null)
+
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === 'ja' ? 'en' : 'ja')
   }
 
+  // Publish the sticky header's height so scroll targets can clear it
+  useLayoutEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const update = () => document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <header className="sticky top-0 z-40" style={{ backdropFilter: 'saturate(1.4) blur(12px)', WebkitBackdropFilter: 'saturate(1.4) blur(12px)' }}>
+    <header ref={headerRef} className="sticky top-0 z-40" style={{ backdropFilter: 'saturate(1.4) blur(12px)', WebkitBackdropFilter: 'saturate(1.4) blur(12px)' }}>
       <div aria-hidden="true" style={{ height: 3, background: PH_GRADIENT_CSS }} />
       <div
         className="border-b"
@@ -32,8 +45,10 @@ export default function Header({ onHelp }: { onHelp: () => void }) {
               style={{ borderRadius: 10 }}
             />
             <div className="min-w-0">
-              <h1 className="text-[14px] sm:text-lg font-extrabold leading-tight m-0" style={{ color: 'var(--color-text)', textWrap: 'balance' }}>
-                {t('title')}
+              <h1 className="text-[15px] sm:text-lg font-extrabold leading-tight m-0" style={{ color: 'var(--color-text)', textWrap: 'balance' }}>
+                {/* Phones get a short title so the header stays one compact row */}
+                <span className="max-[479px]:sr-only">{t('title')}</span>
+                <span className="min-[480px]:hidden" aria-hidden="true">{t('titleShort')}</span>
               </h1>
               <p className="text-xs m-0 hidden sm:block" style={{ color: 'var(--color-text-muted)' }}>
                 {t('subtitle')}

@@ -1,10 +1,13 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSim } from '../context/SimContext'
 import { getIndicator } from '../data/indicators'
 import { hasBuffer, indicatorSuitable, isWeakAcid, isWeakBase, titrationStage, titrationType, type Stage } from '../lib/stage'
 import Quiz from './Quiz'
 import { BookIcon, CheckIcon, FlaskIcon, LightbulbIcon, PaletteIcon, TargetIcon, TrophyIcon, WavesIcon, XIcon } from './Icons'
+
+const TABS = ['explanation', 'quiz'] as const
+type TabId = typeof TABS[number]
 
 type CardKind = 'overview' | 'buffer' | 'equivalence' | 'near' | 'after' | 'indicator'
 
@@ -16,17 +19,32 @@ interface ExplanationCard {
 
 const CARD_STYLE: Record<CardKind, { icon: ReactNode; color: string }> = {
   overview:    { icon: <FlaskIcon size={14} />,     color: 'var(--color-accent)' },
-  buffer:      { icon: <WavesIcon size={14} />,     color: '#16a34a' },
-  equivalence: { icon: <TargetIcon size={14} />,    color: '#d97706' },
-  near:        { icon: <LightbulbIcon size={14} />, color: '#d97706' },
-  after:       { icon: <TargetIcon size={14} />,    color: '#8b5cf6' },
-  indicator:   { icon: <PaletteIcon size={14} />,   color: '#db2777' },
+  buffer:      { icon: <WavesIcon size={14} />,     color: 'var(--color-success)' },
+  equivalence: { icon: <TargetIcon size={14} />,    color: 'var(--color-warn)' },
+  near:        { icon: <LightbulbIcon size={14} />, color: 'var(--color-warn)' },
+  after:       { icon: <TargetIcon size={14} />,    color: 'var(--color-violet)' },
+  indicator:   { icon: <PaletteIcon size={14} />,   color: 'var(--color-pink)' },
 }
 
 export default function LearningPanel() {
   const { t } = useTranslation()
   const { state } = useSim()
-  const [tab, setTab] = useState<'explanation' | 'quiz'>('explanation')
+  const [tab, setTab] = useState<TabId>('explanation')
+
+  // WAI-ARIA tabs: arrow keys / Home / End move selection and focus
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const i = TABS.indexOf(tab)
+    const next =
+      e.key === 'ArrowRight' ? TABS[(i + 1) % TABS.length]
+      : e.key === 'ArrowLeft' ? TABS[(i - 1 + TABS.length) % TABS.length]
+      : e.key === 'Home' ? TABS[0]
+      : e.key === 'End' ? TABS[TABS.length - 1]
+      : null
+    if (!next) return
+    e.preventDefault()
+    setTab(next)
+    document.getElementById(`tab-${next}`)?.focus()
+  }
 
   const explanation = buildExplanation(state, t)
 
@@ -34,14 +52,15 @@ export default function LearningPanel() {
     <div className="card flex flex-col h-full overflow-hidden" style={{ color: 'var(--color-text)' }}>
       {/* Tab bar */}
       <div className="p-3 pb-0">
-        <div className="segmented" role="tablist" aria-label={t('learning.title')}>
-          {(['explanation', 'quiz'] as const).map(tabId => (
+        <div className="segmented" role="tablist" aria-label={t('learning.title')} onKeyDown={onTabKey}>
+          {TABS.map(tabId => (
             <button
               key={tabId}
               role="tab"
               id={`tab-${tabId}`}
               aria-selected={tab === tabId}
               aria-controls={`panel-${tabId}`}
+              tabIndex={tab === tabId ? 0 : -1}
               onClick={() => setTab(tabId)}
               className="flex items-center justify-center gap-1.5"
             >
@@ -52,27 +71,31 @@ export default function LearningPanel() {
         </div>
       </div>
 
-      {/* Content */}
-      <div
-        className="flex-1 overflow-y-auto p-3"
-        role="tabpanel"
-        id={`panel-${tab}`}
-        aria-labelledby={`tab-${tab}`}
-        style={{ maxHeight: 560 }}
-      >
-        {tab === 'explanation' ? (
-          <div className="flex flex-col gap-3">
-            <StageStepper />
-            <div className="flex flex-col gap-2">
-              {explanation.map((card, i) => (
-                <ExplanationItem key={`${card.kind}-${i}`} card={card} />
-              ))}
+      {/* Content — both panels stay mounted (quiz progress survives tab switches) */}
+      {TABS.map(tabId => (
+        <div
+          key={tabId}
+          className="flex-1 overflow-y-auto p-3"
+          role="tabpanel"
+          id={`panel-${tabId}`}
+          aria-labelledby={`tab-${tabId}`}
+          hidden={tab !== tabId}
+          style={{ maxHeight: 560 }}
+        >
+          {tabId === 'explanation' ? (
+            <div className="flex flex-col gap-3">
+              <StageStepper />
+              <div className="flex flex-col gap-2">
+                {explanation.map((card, i) => (
+                  <ExplanationItem key={`${card.kind}-${i}`} card={card} />
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <Quiz />
-        )}
-      </div>
+          ) : (
+            <Quiz />
+          )}
+        </div>
+      ))}
     </div>
   )
 }
@@ -145,7 +168,7 @@ function ExplanationItem({ card }: { card: ExplanationCard }) {
       <div className="flex items-center gap-1.5 text-[11.5px] font-bold mb-1" style={{ color: st.color }}>
         {st.icon}
         {t(`learning.cards.${card.kind}`)}
-        {card.active && <span className="chip ml-auto" style={{ background: st.color, color: '#fff', fontSize: 10, padding: '1px 7px' }}>{t('learning.nowHere')}</span>}
+        {card.active && <span className="chip ml-auto" style={{ background: st.color, color: 'var(--color-surface)', fontSize: 10, padding: '1px 7px' }}>{t('learning.nowHere')}</span>}
       </div>
       <p className="text-[13px] leading-relaxed m-0" style={{ color: 'var(--color-text)' }}>{card.text}</p>
       {card.kind === 'indicator' && (

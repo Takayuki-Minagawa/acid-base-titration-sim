@@ -1,5 +1,6 @@
 {
   "title": "酸塩基滴定シミュレーター",
+  "titleShort": "滴定シミュレーター",
   "subtitle": "pH変化をリアルタイムに観察しよう",
   "theme": {
     "light": "ライト",
@@ -43,8 +44,6 @@
     },
     "oneDrop": "1滴",
     "oneDropAria": "1滴（0.05 mL）だけ滴下",
-    "indicatorRange": "変色域",
-    "colorless": "無色",
     "playback": "滴定の操作",
     "slow": "ゆっくり",
     "fast": "速い",
@@ -74,7 +73,7 @@
     "logScale": "対数目盛（1目盛ごとに10倍）",
     "dominantAcid": "[H⁺] が [OH⁻] より多い → 酸性",
     "dominantBase": "[OH⁻] が [H⁺] より多い → 塩基性",
-    "dominantNeutral": "[H⁺] と [OH⁻] がほぼ等しい → 中性",
+    "dominantNeutral": "pH が 7 付近 → ほぼ中性（[H⁺] と [OH⁻] の差が小さい）",
     "formula": "ヘンダーソン–ハッセルバルヒ式"
   },
   "experiment": {
@@ -83,8 +82,7 @@
     "beaker": "ビーカー",
     "phMeter": "pH メーター",
     "equivalenceReached": "当量点到達！",
-    "ariaLabel": "実験の様子：ビーカー内の pH {{ph}}、滴下量 {{vol}} mL",
-    "added": "滴下量"
+    "ariaLabel": "実験の様子：ビーカー内の pH {{ph}}、滴下量 {{vol}} mL"
   },
   "learning": {
     "title": "学習パネル",

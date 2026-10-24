@@ -142,7 +142,7 @@ function SpeciesCard({
 }
 
 function StrengthTag({ strong, label, kind }: { strong: boolean; label: string; kind: 'acid' | 'base' }) {
-  const color = kind === 'acid' ? '#ef4444' : '#3b82f6'
+  const color = kind === 'acid' ? 'var(--color-acid)' : 'var(--color-base)'
   return (
     <span
       className="chip"

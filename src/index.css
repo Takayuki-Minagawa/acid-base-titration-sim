@@ -19,10 +19,15 @@
   --color-on-accent: #ffffff;
   --color-success: #15803d;
   --color-success-soft: rgba(34, 197, 94, 0.14);
-  --color-danger: #dc2626;
+  --color-danger: #b91c1c;
   --color-danger-soft: rgba(239, 68, 68, 0.12);
   --color-warn: #b45309;
   --color-warn-soft: rgba(245, 158, 11, 0.16);
+  /* Text-safe hues (≥4.5:1 on surfaces) */
+  --color-acid: #b91c1c;
+  --color-base: #1d4ed8;
+  --color-violet: #6d28d9;
+  --color-pink: #be185d;
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px -6px rgba(15, 23, 42, 0.08);
   --shadow-pop: 0 12px 32px -8px rgba(15, 23, 42, 0.25);
   --radius-card: 18px;
@@ -51,6 +56,10 @@
   --color-danger-soft: rgba(248, 113, 113, 0.14);
   --color-warn: #fbbf24;
   --color-warn-soft: rgba(251, 191, 36, 0.14);
+  --color-acid: #fca5a5;
+  --color-base: #93c5fd;
+  --color-violet: #c4b5fd;
+  --color-pink: #f9a8d4;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -10px rgba(0, 0, 0, 0.5);
   --shadow-pop: 0 16px 40px -8px rgba(0, 0, 0, 0.6);
   color-scheme: dark;
@@ -484,7 +493,8 @@ body {
   }
 
   .mobile-dock { display: flex; }
-  .toast-stack { bottom: 92px; }
+  .toast-stack { bottom: 92px; width: 300px; }
+  .toast-item { padding: 10px; }
 }
 
 @media (max-width: 480px) {
@@ -492,4 +502,8 @@ body {
   .header-actions .btn { min-height: 36px; border-radius: 10px; }
   .header-actions .btn-icon { width: 36px; }
   .header-logo { width: 30px; height: 30px; }
+}
+
+@media (max-width: 420px) {
+  .header-logo { display: none; }
 }

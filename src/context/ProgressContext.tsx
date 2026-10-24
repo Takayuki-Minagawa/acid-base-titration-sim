@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useSim } from './SimContext'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useSim, type SimState } from './SimContext'
 import { getIndicator } from '../data/indicators'
 import { DISCOVERY_IDS, type DiscoveryId } from '../lib/discoveries'
 import { hasBuffer, indicatorSuitable, isInBufferRegion, titrationType, type TitrationType } from '../lib/stage'
@@ -19,6 +19,7 @@ interface ProgressValue {
 }
 
 const STORAGE_KEY = 'titration-progress-v1'
+const EQUIV_EPS = 1e-6
 
 function load(): { unlocked: DiscoveryId[]; typesSeen: TitrationType[] } {
   try {
@@ -38,6 +39,16 @@ function save(unlocked: DiscoveryId[], typesSeen: TitrationType[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ unlocked, typesSeen }))
   } catch { /* storage unavailable */ }
+}
+
+function newRun(s: SimState) {
+  return {
+    curve: s.curve,
+    indicator: s.indicatorId,
+    min: s.currentPH,
+    max: s.currentPH,
+    beforeEquiv: s.addedVol < s.equivVol - EQUIV_EPS,
+  }
 }
 
 const ProgressContext = createContext<ProgressValue>({
@@ -81,28 +92,31 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     setToasts(ts => ts.filter(t => t.key !== key))
   }, [])
 
-  // Track the pH range observed in the current run (for the colour-change discovery)
-  const run = useRef({ curve: state.curve, indicator: state.indicatorId, min: state.currentPH, max: state.currentPH })
+  // Track the current run (same curve & indicator since the last reset): observed pH range, and
+  // whether it started before equivalence — so discoveries need an actual crossing, not a config switch.
+  const run = useRef(newRun(state))
 
   useEffect(() => {
     const s = state
     const r = run.current
     if (r.curve !== s.curve || r.indicator !== s.indicatorId || s.addedVol < 0.01) {
-      run.current = { curve: s.curve, indicator: s.indicatorId, min: s.currentPH, max: s.currentPH }
+      run.current = newRun(s)
     } else {
       r.min = Math.min(r.min, s.currentPH)
       r.max = Math.max(r.max, s.currentPH)
+      r.beforeEquiv ||= s.addedVol < s.equivVol - EQUIV_EPS
     }
 
     if (s.addedVol >= 0.01) unlock('firstDrop')
 
-    const passedEquiv = s.addedVol >= s.equivVol && s.addedVol > 0
+    // equivVol carries float error (e.g. 50.00000000000001), so compare with a tolerance
+    const passedEquiv = s.addedVol > 0 && s.addedVol >= s.equivVol - EQUIV_EPS
     if (passedEquiv) {
       unlock('equivalence')
       markType(titrationType(s))
       if (typesRef.current.length >= 4) unlock('allTypes')
       if (!s.acidInBeaker) unlock('reverse')
-      if (indicatorSuitable(s)) unlock('rightIndicator')
+      if (run.current.beforeEquiv && indicatorSuitable(s)) unlock('rightIndicator')
     }
 
     if (s.indicatorId !== 'none') {
@@ -111,21 +125,26 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     }
 
     if (isInBufferRegion(s)) unlock('buffer')
-
-    if (
-      hasBuffer(s) &&
-      s.status !== 'running' &&
-      Math.abs(s.addedVol - s.equivVol / 2) <= s.equivVol * 0.04
-    ) {
-      unlock('halfEquiv')
-    }
   }, [state, unlock, markType])
 
-  return (
-    <ProgressContext.Provider value={{ unlocked, typesSeen, unlock, toasts, dismissToast }}>
-      {children}
-    </ProgressContext.Provider>
+  // Half-equivalence: the user has to actually stop there (not just drag the slider across it)
+  const atHalfEquiv =
+    hasBuffer(state) &&
+    state.status !== 'running' &&
+    state.addedVol > 0 &&
+    Math.abs(state.addedVol - state.equivVol / 2) <= state.equivVol * 0.04
+  useEffect(() => {
+    if (!atHalfEquiv) return
+    const id = window.setTimeout(() => unlock('halfEquiv'), 800)
+    return () => window.clearTimeout(id)
+  }, [atHalfEquiv, state.addedVol, unlock])
+
+  const value = useMemo(
+    () => ({ unlocked, typesSeen, unlock, toasts, dismissToast }),
+    [unlocked, typesSeen, unlock, toasts, dismissToast],
   )
+
+  return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

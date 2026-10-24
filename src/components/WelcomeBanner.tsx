@@ -1,11 +1,24 @@
 import { useTranslation } from 'react-i18next'
+import { useSim } from '../context/SimContext'
 import { PH_GRADIENT_CSS } from '../lib/phColor'
 import { ArrowRightIcon, ChartIcon, DropIcon, PlayIcon, SwapIcon, TrophyIcon, XIcon } from './Icons'
 
 const STEP_ICONS = [PlayIcon, ChartIcon, SwapIcon, TrophyIcon]
 
-export default function WelcomeBanner({ onStart, onClose }: { onStart: () => void; onClose: () => void }) {
+export default function WelcomeBanner({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
+  const { state, dispatch } = useSim()
+
+  const onStart = () => {
+    onClose()
+    if (state.status === 'done') dispatch({ type: 'RESET' })
+    dispatch({ type: 'PLAY' })
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // Wait for the banner to unmount so the target position is final
+    requestAnimationFrame(() => {
+      document.getElementById('experiment')?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+    })
+  }
   const steps = t('welcome.steps', { returnObjects: true }) as { title: string; desc: string }[]
 
   return (
@@ -27,7 +40,7 @@ export default function WelcomeBanner({ onStart, onClose }: { onStart: () => voi
           <div className="eyebrow flex items-center gap-1.5" style={{ color: 'var(--color-accent)' }}>
             <DropIcon size={13} /> {t('welcome.eyebrow')}
           </div>
-          <h2 id="welcome-title" className="mt-1 text-lg sm:text-xl font-extrabold leading-snug" style={{ color: 'var(--color-text)' }}>
+          <h2 id="welcome-title" tabIndex={-1} className="mt-1 text-lg sm:text-xl font-extrabold leading-snug" style={{ color: 'var(--color-text)' }}>
             {t('welcome.title')}
           </h2>
           <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>

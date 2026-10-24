@@ -4,7 +4,7 @@ import { useSim } from '../context/SimContext'
 import { getIndicator, getSolutionColor } from '../data/indicators'
 import { useTheme } from '../context/ThemeContext'
 import { phColor, phRegion } from '../lib/phColor'
-import { maxVolume } from '../lib/stage'
+import { maxVolume, volDecimals } from '../lib/stage'
 import PHScale from './PHScale'
 import { PlaybackButtons, SeekSlider } from './PlaybackControls'
 import { FlaskIcon, TargetIcon } from './Icons'
@@ -108,6 +108,8 @@ export default function ExperimentView() {
     let rafId = 0
     let shown: RGBA | null = null // displayed (smoothed) solution colour
     let lastSig = ''
+    let lastPulse = 0
+    let onScreen = true
     let cssW = 0, cssH = 0, dpr = 1
 
     const resize = () => {
@@ -119,6 +121,9 @@ export default function ExperimentView() {
       lastSig = ''
     }
     const ro = new ResizeObserver(resize)
+    // Stop drawing while the canvas is scrolled out of view
+    const io = new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; lastSig = '' })
+    io.observe(canvas)
     ro.observe(canvas)
     resize()
 
@@ -132,6 +137,11 @@ export default function ExperimentView() {
       const P = PALETTE[themeRef.current === 'dark' ? 'dark' : 'light']
       const ctx = canvas.getContext('2d')
       if (!ctx || cssW === 0) return
+      if (!onScreen) {
+        prevVol = s.addedVol
+        drops.length = 0; ripples.length = 0; blobs.length = 0
+        return
+      }
 
       const maxVol = maxVolume(s)
       const indicator = getIndicator(s.indicatorId)
@@ -200,7 +210,9 @@ export default function ExperimentView() {
       const nearEquiv = s.addedVol > 0.1 && s.equivalencePoints.some(ep => Math.abs(ep.volume - s.addedVol) < Math.max(0.4, ep.volume * 0.012))
 
       // Skip redraw when nothing is moving
-      const animating = drops.length > 0 || ripples.length > 0 || blobs.length > 0 || stirring || !colorSettled || (nearEquiv && !reduced)
+      // The equivalence glow only needs ~20 fps
+      const pulseDue = nearEquiv && !reduced && now - lastPulse >= 50
+      const animating = drops.length > 0 || ripples.length > 0 || blobs.length > 0 || stirring || !colorSettled || pulseDue
       const sig = `${s.addedVol}|${s.currentPH}|${s.indicatorId}|${themeRef.current}|${s.status}|${s.sampleVol}|${maxVol}|${tRef.current('experiment.beaker')}`
       if (!animating && sig === lastSig) return
       lastSig = sig
@@ -310,10 +322,10 @@ export default function ExperimentView() {
         ctx.moveTo(BX + TUBE_HALF - (major ? 9 : 5), y)
         ctx.lineTo(BX + TUBE_HALF, y)
         ctx.stroke()
-        if (major) ctx.fillText(String(Math.round((maxVol * i) / 20)), BX + TUBE_HALF + 4, y)
+        if (major) ctx.fillText(((maxVol * i) / 20).toFixed(volDecimals(maxVol)), BX + TUBE_HALF + 4, y)
       }
       // reading tag
-      const tag = `${s.addedVol.toFixed(1)} mL`
+      const tag = `${s.addedVol.toFixed(Math.max(1, volDecimals(maxVol)))} mL`
       ctx.font = `700 ${10.5 * textK}px ${MONO}`
       const tw = ctx.measureText(tag).width + 12
       ctx.fillStyle = themeRef.current === 'dark' ? '#818cf8' : '#4f46e5'
@@ -354,6 +366,7 @@ export default function ExperimentView() {
 
       // ── Beaker glow near the equivalence point ──
       if (nearEquiv) {
+        lastPulse = now
         const pulse = reduced ? 0.6 : 0.5 + 0.5 * Math.sin(now / 220)
         ctx.save()
         ctx.shadowColor = `rgba(245,158,11,${0.35 + 0.4 * pulse})`
@@ -512,6 +525,7 @@ export default function ExperimentView() {
     return () => {
       cancelAnimationFrame(rafId)
       ro.disconnect()
+      io.disconnect()
     }
   }, []) // Intentional empty deps: loop reads from refs
 
@@ -557,15 +571,17 @@ export default function ExperimentView() {
             <span className="mono text-[26px] sm:text-[30px] font-extrabold leading-none" style={{ color: 'var(--color-text)' }}>
               {state.currentPH.toFixed(2)}
             </span>
-            <span className="text-xs font-bold" style={{ color: phColor(state.currentPH), filter: 'saturate(1.2) brightness(0.85)' }}>
+            <span className="chip" style={{ background: `color-mix(in srgb, ${phColor(state.currentPH)} 24%, transparent)`, color: 'var(--color-text)' }}>
               {t(`region.${region}`)}
             </span>
           </div>
         </div>
 
+        {/* Always-mounted live region so screen readers announce the moment it fills */}
+        <span className="sr-only" role="status" aria-live="polite">{nearEquiv ? t('experiment.equivalenceReached') : ''}</span>
         {nearEquiv && (
-          <div className="absolute left-1/2 bottom-2.5 -translate-x-1/2 anim-pop">
-            <span className="chip anim-glow" style={{ background: '#f59e0b', color: '#fff', fontSize: 13, padding: '6px 14px' }} role="status">
+          <div className="absolute left-1/2 bottom-2.5 -translate-x-1/2 anim-pop" aria-hidden="true">
+            <span className="chip anim-glow" style={{ background: '#f59e0b', color: '#3b2300', fontSize: 13, padding: '6px 14px' }}>
               <TargetIcon size={14} /> {t('experiment.equivalenceReached')}
             </span>
           </div>

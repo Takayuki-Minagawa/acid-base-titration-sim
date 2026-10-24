@@ -30,7 +30,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: (key: number) =>
 
   return (
     <div
-      className="pointer-events-auto flex items-start gap-3 p-3 rounded-2xl border toast-item"
+      className="flex items-start gap-3 p-3 rounded-2xl border toast-item"
       style={{
         background: 'var(--color-surface)',
         borderColor: 'var(--color-border)',
@@ -49,7 +49,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: (key: number) =>
         <div className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{t(`discoveries.items.${toast.id}.title`)}</div>
         <div className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{t(`discoveries.items.${toast.id}.hint`)}</div>
       </div>
-      <button className="btn btn-icon btn-sm" style={{ width: 28, minHeight: 28, color: 'var(--color-text-muted)', background: 'none' }} onClick={() => onClose(toast.key)} aria-label={t('welcome.dismiss')}>
+      <button className="btn btn-icon btn-sm pointer-events-auto" style={{ width: 28, minHeight: 28, color: 'var(--color-text-muted)', background: 'none' }} onClick={() => onClose(toast.key)} aria-label={t('welcome.dismiss')}>
         <XIcon size={14} />
       </button>
     </div>

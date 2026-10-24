@@ -126,8 +126,8 @@ export default function IonPanel() {
       <div
         className="rounded-xl px-3 py-2 text-xs font-semibold text-center"
         style={{
-          background: dominance === 'dominantAcid' ? 'var(--color-danger-soft)' : dominance === 'dominantBase' ? 'rgba(59,130,246,0.12)' : 'var(--color-success-soft)',
-          color: dominance === 'dominantAcid' ? 'var(--color-danger)' : dominance === 'dominantBase' ? '#3b82f6' : 'var(--color-success)',
+          background: dominance === 'dominantAcid' ? 'var(--color-danger-soft)' : dominance === 'dominantBase' ? 'color-mix(in srgb, var(--color-base) 12%, transparent)' : 'var(--color-success-soft)',
+          color: dominance === 'dominantAcid' ? 'var(--color-acid)' : dominance === 'dominantBase' ? 'var(--color-base)' : 'var(--color-success)',
           transition: 'background-color 0.3s, color 0.3s',
         }}
       >

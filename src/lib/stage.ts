@@ -45,3 +45,16 @@ export function indicatorSuitable(s: SimState): boolean {
   const ind = getIndicator(s.indicatorId)
   return s.indicatorId !== 'none' && s.equivalencePoints.some(ep => ep.ph >= ind.pHLow && ep.ph <= ind.pHHigh)
 }
+
+/** Decimal places for volume readouts, so tiny titrations (maxVol ≪ 1 mL) stay legible */
+export function volDecimals(maxVol: number): number {
+  if (maxVol >= 50) return 0
+  if (maxVol >= 5) return 1
+  if (maxVol >= 0.5) return 2
+  return 3
+}
+
+/** Seek-slider step: one drop, but never coarser than 1/200 of the full range */
+export function seekStep(maxVol: number): number {
+  return Math.min(DROP_VOLUME, maxVol / 200)
+}

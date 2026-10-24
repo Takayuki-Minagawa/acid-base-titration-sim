@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useId } from 'react'
+import { useMemo, useState, useCallback, useId, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSim } from '../context/SimContext'
 import { getIndicator } from '../data/indicators'
@@ -18,6 +18,18 @@ export default function TitrationCurve() {
   const { state } = useSim()
   const [hoverPoint, setHoverPoint] = useState<TitrationPoint | null>(null)
   const uid = useId().replace(/:/g, '')
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  // Touch: the tooltip stays after the finger lifts; a tap elsewhere dismisses it
+  const hasHover = hoverPoint !== null
+  useEffect(() => {
+    if (!hasHover) return
+    const onDown = (e: PointerEvent) => {
+      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHoverPoint(null)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [hasHover])
 
   const { curve, addedVol, equivalencePoints, indicatorId } = state
   const indicator = getIndicator(indicatorId)
@@ -114,9 +126,11 @@ export default function TitrationCurve() {
   const cur = { x: toSvgX(addedVol), y: toSvgY(state.currentPH) }
 
   // Tooltip placement, kept inside the plot
-  const tip = hoverPoint && (() => {
-    const hx = toSvgX(hoverPoint.volume)
-    const hy = toSvgY(hoverPoint.ph)
+  // Ignore a stale point after a reset / config change
+  const shownPoint = hoverPoint && hoverPoint.volume <= addedVol + 1e-9 ? hoverPoint : null
+  const tip = shownPoint && (() => {
+    const hx = toSvgX(shownPoint.volume)
+    const hy = toSvgY(shownPoint.ph)
     const tw = 96, th = 36
     const tx = hx + 10 + tw > W - 4 ? hx - 10 - tw : hx + 10
     const ty = Math.max(MARGIN.top, Math.min(MARGIN.top + PLOT_H - th, hy - th - 6))
@@ -155,7 +169,8 @@ export default function TitrationCurve() {
         style={{ overflow: 'visible', touchAction: 'pan-y', minHeight: 200 }}
         onPointerMove={handlePointer}
         onPointerDown={handlePointer}
-        onPointerLeave={() => setHoverPoint(null)}
+        ref={svgRef}
+        onPointerLeave={e => { if (e.pointerType === 'mouse') setHoverPoint(null) }}
         role="img"
         aria-label={t('graph.ariaLabel')}
       >
@@ -201,9 +216,9 @@ export default function TitrationCurve() {
 
         {/* Region labels on the right */}
         <g fontSize={10.5} fontWeight={700} textAnchor="start">
-          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(11)} fill={phColor(11)}>{t('region.basic')}</text>
-          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(7) + 4} fill={phColor(7)}>{t('region.neutral')}</text>
-          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(3)} fill={phColor(3)}>{t('region.acidic')}</text>
+          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(11)} fill="var(--color-base)">{t('region.basic')}</text>
+          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(7) + 4} fill="var(--color-success)">{t('region.neutral')}</text>
+          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(3)} fill="var(--color-acid)">{t('region.acidic')}</text>
         </g>
 
         {/* Ghost curve */}
@@ -237,7 +252,7 @@ export default function TitrationCurve() {
               <line x1={ex} y1={MARGIN.top} x2={ex} y2={MARGIN.top + PLOT_H} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4,3" />
               {drawn && <circle cx={ex} cy={ey} r={6} fill="none" stroke="#f59e0b" strokeWidth={2} className="pulse-ring" />}
               <circle cx={ex} cy={ey} r={5} fill="#f59e0b" stroke="var(--color-surface)" strokeWidth={1.5} />
-              <text x={ex + 8} y={ey + 14} fontSize={10.5} fontWeight={700} fill="#d97706">
+              <text x={ex + 8} y={ey + 14} fontSize={10.5} fontWeight={700} fill="var(--color-warn)">
                 {t('graph.equivalencePoint')} pH={ep.ph.toFixed(1)}
               </text>
             </g>
@@ -253,14 +268,14 @@ export default function TitrationCurve() {
         )}
 
         {/* Hover tooltip */}
-        {hoverPoint && tip && (
+        {shownPoint && tip && (
           <g pointerEvents="none">
             <line
               x1={tip.hx} y1={MARGIN.top}
               x2={tip.hx} y2={MARGIN.top + PLOT_H}
               stroke="currentColor" strokeOpacity={0.35} strokeWidth={1} strokeDasharray="3,2"
             />
-            <circle cx={tip.hx} cy={tip.hy} r={4} fill={phColor(hoverPoint.ph)} stroke="var(--color-surface)" strokeWidth={1.5} />
+            <circle cx={tip.hx} cy={tip.hy} r={4} fill={phColor(shownPoint.ph)} stroke="var(--color-surface)" strokeWidth={1.5} />
             <rect
               x={tip.tx} y={tip.ty}
               width={tip.tw} height={tip.th} rx={8}
@@ -268,10 +283,10 @@ export default function TitrationCurve() {
               style={{ filter: 'drop-shadow(0 4px 8px rgba(15,23,42,0.15))' }}
             />
             <text x={tip.tx + 10} y={tip.ty + 15} fontSize={10.5} fill="currentColor" opacity={0.7}>
-              {hoverPoint.volume.toFixed(2)} mL
+              {shownPoint.volume.toFixed(2)} mL
             </text>
             <text x={tip.tx + 10} y={tip.ty + 29} fontSize={12} fontWeight={700} fill="currentColor">
-              pH = {hoverPoint.ph.toFixed(2)}
+              pH = {shownPoint.ph.toFixed(2)}
             </text>
           </g>
         )}
