@@ -1,5 +1,6 @@
 {
   "title": "酸塩基滴定シミュレーター",
+  "titleShort": "滴定シミュレーター",
   "subtitle": "pH変化をリアルタイムに観察しよう",
   "theme": {
     "light": "ライト",
@@ -31,7 +32,22 @@
       "before": "滴定前",
       "running": "滴定中",
       "done": "完了"
-    }
+    },
+    "direction": "滴定の向き",
+    "sampleCard": "ビーカー（試料）",
+    "titrantCard": "ビュレット（滴下液）",
+    "strength": {
+      "strongAcid": "強酸",
+      "weakAcid": "弱酸",
+      "strongBase": "強塩基",
+      "weakBase": "弱塩基"
+    },
+    "oneDrop": "1滴",
+    "oneDropAria": "1滴（0.05 mL）だけ滴下",
+    "playback": "滴定の操作",
+    "slow": "ゆっくり",
+    "fast": "速い",
+    "stopped": "一時停止中"
   },
   "graph": {
     "title": "滴定曲線",
@@ -40,7 +56,11 @@
     "equivalencePoint": "当量点",
     "indicatorRange": "変色域",
     "suitable": "適切",
-    "unsuitable": "不適"
+    "unsuitable": "不適",
+    "halfEquivalence": "半当量点",
+    "ariaLabel": "滴定曲線。横軸は滴下量、縦軸は pH",
+    "tapHint": "グラフに触れると値を確認できます",
+    "exportAria": "ここまでの滴定データを CSV でダウンロード"
   },
   "ions": {
     "title": "イオン濃度",
@@ -49,14 +69,20 @@
     "acid": "[酸]",
     "base": "[塩基]",
     "salt": "[塩]",
-    "bufferRegion": "緩衝領域"
+    "bufferRegion": "緩衝領域",
+    "logScale": "対数目盛（1目盛ごとに10倍）",
+    "dominantAcid": "[H⁺] が [OH⁻] より多い → 酸性",
+    "dominantBase": "[OH⁻] が [H⁺] より多い → 塩基性",
+    "dominantNeutral": "pH が 7 付近 → ほぼ中性（[H⁺] と [OH⁻] の差が小さい）",
+    "formula": "ヘンダーソン–ハッセルバルヒ式"
   },
   "experiment": {
     "title": "実験ビュー",
     "burette": "ビュレット",
     "beaker": "ビーカー",
     "phMeter": "pH メーター",
-    "equivalenceReached": "当量点到達！"
+    "equivalenceReached": "当量点到達！",
+    "ariaLabel": "実験の様子：ビーカー内の pH {{ph}}、滴下量 {{vol}} mL"
   },
   "learning": {
     "title": "学習パネル",
@@ -82,25 +108,45 @@
     "quiz": {
       "q1": {
         "question": "強酸-強塩基の滴定における当量点のpHはいくつですか？",
-        "options": ["pH = 7.0", "pH < 7.0", "pH > 7.0", "滴定条件による"],
+        "options": [
+          "pH = 7.0",
+          "pH < 7.0",
+          "pH > 7.0",
+          "滴定条件による"
+        ],
         "answer": 0,
         "explanation": "強酸（HCl等）と強塩基（NaOH等）の中和で生成する塩（NaCl等）は加水分解しないため、当量点でpH = 7.0となります。"
       },
       "q2": {
         "question": "弱酸-強塩基の滴定に最も適した指示薬はどれですか？",
-        "options": ["メチルオレンジ（3.1〜4.4）", "BTB（6.0〜7.6）", "フェノールフタレイン（8.3〜10.0）", "どれでも同じ"],
+        "options": [
+          "メチルオレンジ（3.1〜4.4）",
+          "BTB（6.0〜7.6）",
+          "フェノールフタレイン（8.3〜10.0）",
+          "どれでも同じ"
+        ],
         "answer": 2,
         "explanation": "弱酸-強塩基の当量点はpH > 7（アルカリ性側）です。フェノールフタレインの変色域（8.3〜10.0）がこの範囲をカバーするため最適です。"
       },
       "q3": {
         "question": "緩衝液が生成されるのはどのタイミングですか？",
-        "options": ["滴定前", "当量点の前後（弱酸と共役塩基が共存）", "当量点ちょうど", "当量点以降"],
+        "options": [
+          "滴定前",
+          "当量点の前後（弱酸と共役塩基が共存）",
+          "当量点ちょうど",
+          "当量点以降"
+        ],
         "answer": 1,
         "explanation": "弱酸とその共役塩基（弱酸の塩）が共存するとき、外から酸や塩基を加えてもpHが大きく変化しない緩衝作用が生じます。これはヘンダーソン–ハッセルバルヒ式で説明されます。"
       },
       "q4": {
         "question": "0.1 mol/L CH₃COOH (Ka = 1.8×10⁻⁵) 100 mLを0.1 mol/L NaOHで滴定する当量点のpHは？",
-        "options": ["pH = 7.0", "pH ≈ 8.9", "pH ≈ 5.1", "pH = 14"],
+        "options": [
+          "pH = 7.0",
+          "pH ≈ 8.9",
+          "pH ≈ 5.1",
+          "pH = 14"
+        ],
         "answer": 1,
         "explanation": "当量点ではCH₃COONaのみが存在します。CH₃COO⁻の加水分解 Ka × Kb = Kw より Kb = 10⁻¹⁴ / 1.8×10⁻⁵ ≈ 5.6×10⁻¹⁰。[OH⁻] = √(0.1 × 5.6×10⁻¹⁰) ≈ 7.5×10⁻⁶ → pOH ≈ 5.1 → pH ≈ 8.9"
       }
@@ -109,7 +155,33 @@
     "incorrect": "不正解",
     "showAnswer": "解説を見る",
     "nextQuestion": "次の問題",
-    "score": "スコア"
+    "score": "スコア",
+    "stages": {
+      "start": "滴定前",
+      "progress": "中和が進行",
+      "buffer": "緩衝領域",
+      "near": "当量点付近",
+      "after": "当量点を通過"
+    },
+    "stageLabel": "滴定の進み具合",
+    "nowHere": "いまここ",
+    "cards": {
+      "overview": "この組み合わせ",
+      "buffer": "緩衝作用",
+      "equivalence": "当量点",
+      "near": "注目！",
+      "after": "当量点の後",
+      "indicator": "指示薬"
+    },
+    "currentIndicator": "選択中の指示薬",
+    "noIndicator": "指示薬が選ばれていません。色の変化を見るには指示薬を選びましょう。",
+    "question": "問題",
+    "resultTitle": "結果",
+    "resultPerfect": "全問正解！滴定マスターです。",
+    "resultGood": "よくできました！解説を読み直して全問正解を目指そう。",
+    "resultRetry": "シミュレーターで確かめてから、もう一度挑戦しよう。",
+    "retry": "もう一度挑戦",
+    "seeResult": "結果を見る"
   },
   "acids": {
     "HCl": "塩酸 (HCl)",
@@ -121,5 +193,87 @@
     "NaOH": "水酸化ナトリウム (NaOH)",
     "KOH": "水酸化カリウム (KOH)",
     "NH3": "アンモニア (NH₃)"
+  },
+  "nav": {
+    "help": "使い方",
+    "discoveries": "発見ノート",
+    "themeToggle": "テーマを切り替え",
+    "langToggle": "Switch to English"
+  },
+  "welcome": {
+    "eyebrow": "ようこそ、実験室へ",
+    "title": "たった1滴で、色が変わる瞬間を見てみよう",
+    "lead": "酸と塩基を混ぜると pH はどう変わる？ ビュレットから少しずつ滴下して、色・グラフ・イオンの変化を同時に観察できます。",
+    "steps": [
+      {
+        "title": "再生する",
+        "desc": "▶ で滴下スタート。「1滴」で慎重に進めることも。"
+      },
+      {
+        "title": "観察する",
+        "desc": "指示薬の色と滴定曲線の急変に注目。"
+      },
+      {
+        "title": "比べる",
+        "desc": "酸・塩基・指示薬を変えて違いを探そう。"
+      },
+      {
+        "title": "確かめる",
+        "desc": "クイズと発見ノートで理解をチェック。"
+      }
+    ],
+    "cta": "さっそく滴定してみる",
+    "dismiss": "閉じる"
+  },
+  "region": {
+    "acidic": "酸性",
+    "neutral": "中性",
+    "basic": "塩基性"
+  },
+  "discoveries": {
+    "title": "発見ノート",
+    "lead": "実験しながら、9つの発見を集めよう。",
+    "toast": "新しい発見！",
+    "locked": "未発見",
+    "progress": "{{n}} / {{total}} 発見",
+    "typesProgress": "{{n}} / 4 種類",
+    "items": {
+      "firstDrop": {
+        "title": "最初の1滴",
+        "hint": "再生または「1滴」で滴定を始める。"
+      },
+      "equivalence": {
+        "title": "当量点に到達",
+        "hint": "酸と塩基がちょうど中和する点まで滴下する。"
+      },
+      "colorChange": {
+        "title": "色が変わる瞬間",
+        "hint": "指示薬を選び、変色域をまたいで滴定する。"
+      },
+      "rightIndicator": {
+        "title": "ぴったりの指示薬",
+        "hint": "当量点の pH を変色域に含む指示薬で当量点を通過する。"
+      },
+      "buffer": {
+        "title": "緩衝領域を観察",
+        "hint": "弱酸（または弱塩基）を強い滴下液で滴定してみる。"
+      },
+      "halfEquiv": {
+        "title": "半当量点の秘密",
+        "hint": "緩衝領域の真ん中（当量点の半分）で止めてみる。pH = pKa になる？"
+      },
+      "reverse": {
+        "title": "向きを変えて",
+        "hint": "「塩基 → 酸」に切り替えて当量点を通過する。"
+      },
+      "allTypes": {
+        "title": "4つの組み合わせ",
+        "hint": "強/弱 × 酸/塩基 の4種類すべてで当量点を通過する。"
+      },
+      "quizPerfect": {
+        "title": "クイズ全問正解",
+        "hint": "学習パネルのクイズで全問正解する。"
+      }
+    }
   }
 }

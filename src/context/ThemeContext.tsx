@@ -14,14 +14,17 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem('theme') as Theme | null
-    if (stored) return stored
+    try {
+      const stored = localStorage.getItem('theme')
+      if (stored === 'light' || stored === 'dark') return stored
+    } catch { /* storage unavailable */ }
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
-    localStorage.setItem('theme', theme)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0a0f1e' : '#f3f5fa')
+    try { localStorage.setItem('theme', theme) } catch { /* storage unavailable */ }
   }, [theme])
 
   const toggleTheme = () => setTheme(t => (t === 'light' ? 'dark' : 'light'))
