@@ -16,16 +16,17 @@ const PLOT_H = H - MARGIN.top - MARGIN.bottom
 export default function TitrationCurve() {
   const { t } = useTranslation()
   const { state } = useSim()
-  const [hoverPoint, setHoverPoint] = useState<TitrationPoint | null>(null)
+  // Store only the hovered volume; the point is looked up in the current curve, so a config change never shows stale values
+  const [hoverVol, setHoverVol] = useState<number | null>(null)
   const uid = useId().replace(/:/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
 
   // Touch: the tooltip stays after the finger lifts; a tap elsewhere dismisses it
-  const hasHover = hoverPoint !== null
+  const hasHover = hoverVol !== null
   useEffect(() => {
     if (!hasHover) return
     const onDown = (e: PointerEvent) => {
-      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHoverPoint(null)
+      if (svgRef.current && !svgRef.current.contains(e.target as Node)) setHoverVol(null)
     }
     document.addEventListener('pointerdown', onDown)
     return () => document.removeEventListener('pointerdown', onDown)
@@ -95,7 +96,7 @@ export default function TitrationCurve() {
     const rect = e.currentTarget.getBoundingClientRect()
     const svgX = (e.clientX - rect.left) / (rect.width / W)
     const xVol = ((svgX - MARGIN.left) / PLOT_W) * maxX
-    if (xVol < 0 || xVol > maxX) { setHoverPoint(null); return }
+    if (xVol < 0 || xVol > maxX) { setHoverVol(null); return }
     // Find nearest drawn point
     let nearest: TitrationPoint | null = null
     let minDist = Infinity
@@ -103,7 +104,7 @@ export default function TitrationCurve() {
       const d = Math.abs(p.volume - xVol)
       if (d < minDist) { minDist = d; nearest = p }
     }
-    setHoverPoint(nearest)
+    setHoverVol(nearest ? nearest.volume : null)
   }
 
   const handleExportCsv = () => {
@@ -126,8 +127,7 @@ export default function TitrationCurve() {
   const cur = { x: toSvgX(addedVol), y: toSvgY(state.currentPH) }
 
   // Tooltip placement, kept inside the plot
-  // Ignore a stale point after a reset / config change
-  const shownPoint = hoverPoint && hoverPoint.volume <= addedVol + 1e-9 ? hoverPoint : null
+  const shownPoint = hoverVol === null ? null : drawnPoints.find(p => p.volume === hoverVol) ?? null
   const tip = shownPoint && (() => {
     const hx = toSvgX(shownPoint.volume)
     const hy = toSvgY(shownPoint.ph)
@@ -170,7 +170,7 @@ export default function TitrationCurve() {
         onPointerMove={handlePointer}
         onPointerDown={handlePointer}
         ref={svgRef}
-        onPointerLeave={e => { if (e.pointerType === 'mouse') setHoverPoint(null) }}
+        onPointerLeave={e => { if (e.pointerType === 'mouse') setHoverVol(null) }}
         role="img"
         aria-label={t('graph.ariaLabel')}
       >

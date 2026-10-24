@@ -147,7 +147,7 @@ function StrengthTag({ strong, label, kind }: { strong: boolean; label: string; 
     <span
       className="chip"
       style={{
-        background: `color-mix(in srgb, ${color} ${strong ? 16 : 8}%, transparent)`,
+        background: `color-mix(in srgb, ${color} ${strong ? 12 : 6}%, transparent)`,
         color,
         border: strong ? '1px solid transparent' : `1px dashed color-mix(in srgb, ${color} 55%, transparent)`,
       }}
