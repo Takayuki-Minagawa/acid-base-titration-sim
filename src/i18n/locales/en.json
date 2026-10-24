@@ -31,7 +31,24 @@
       "before": "Before",
       "running": "Running",
       "done": "Done"
-    }
+    },
+    "direction": "Direction",
+    "sampleCard": "Beaker (sample)",
+    "titrantCard": "Burette (titrant)",
+    "strength": {
+      "strongAcid": "Strong acid",
+      "weakAcid": "Weak acid",
+      "strongBase": "Strong base",
+      "weakBase": "Weak base"
+    },
+    "oneDrop": "1 drop",
+    "oneDropAria": "Add a single drop (0.05 mL)",
+    "indicatorRange": "Range",
+    "colorless": "colourless",
+    "playback": "Titration controls",
+    "slow": "Slow",
+    "fast": "Fast",
+    "stopped": "Paused"
   },
   "graph": {
     "title": "Titration Curve",
@@ -40,7 +57,11 @@
     "equivalencePoint": "Equiv. Point",
     "indicatorRange": "Indicator Range",
     "suitable": "Suitable",
-    "unsuitable": "Unsuitable"
+    "unsuitable": "Unsuitable",
+    "halfEquivalence": "Half-equiv.",
+    "ariaLabel": "Titration curve. x-axis: volume added, y-axis: pH",
+    "tapHint": "Touch the graph to read values",
+    "exportAria": "Download titration data so far as CSV"
   },
   "ions": {
     "title": "Ion Concentrations",
@@ -49,14 +70,21 @@
     "acid": "[Acid]",
     "base": "[Base]",
     "salt": "[Salt]",
-    "bufferRegion": "Buffer Region"
+    "bufferRegion": "Buffer Region",
+    "logScale": "Log scale (×10 per step)",
+    "dominantAcid": "[H⁺] exceeds [OH⁻] → acidic",
+    "dominantBase": "[OH⁻] exceeds [H⁺] → basic",
+    "dominantNeutral": "[H⁺] ≈ [OH⁻] → neutral",
+    "formula": "Henderson–Hasselbalch"
   },
   "experiment": {
     "title": "Experiment View",
     "burette": "Burette",
     "beaker": "Beaker",
     "phMeter": "pH Meter",
-    "equivalenceReached": "Equivalence Point Reached!"
+    "equivalenceReached": "Equivalence Point Reached!",
+    "ariaLabel": "Experiment: beaker pH {{ph}}, {{vol}} mL added",
+    "added": "Added"
   },
   "learning": {
     "title": "Learning Panel",
@@ -82,25 +110,45 @@
     "quiz": {
       "q1": {
         "question": "What is the pH at the equivalence point of a strong acid–strong base titration?",
-        "options": ["pH = 7.0", "pH < 7.0", "pH > 7.0", "Depends on conditions"],
+        "options": [
+          "pH = 7.0",
+          "pH < 7.0",
+          "pH > 7.0",
+          "Depends on conditions"
+        ],
         "answer": 0,
         "explanation": "The salt produced (e.g. NaCl) does not hydrolyze, so the equivalence point is exactly pH = 7.0."
       },
       "q2": {
         "question": "Which indicator is best for a weak acid–strong base titration?",
-        "options": ["Methyl orange (3.1–4.4)", "BTB (6.0–7.6)", "Phenolphthalein (8.3–10.0)", "All the same"],
+        "options": [
+          "Methyl orange (3.1–4.4)",
+          "BTB (6.0–7.6)",
+          "Phenolphthalein (8.3–10.0)",
+          "All the same"
+        ],
         "answer": 2,
         "explanation": "The equivalence point is pH > 7 (alkaline). Phenolphthalein's range (8.3–10.0) covers this, making it most suitable."
       },
       "q3": {
         "question": "When is a buffer solution formed during titration?",
-        "options": ["Before titration", "Before/after equiv. point (weak acid + conjugate base)", "Exactly at equiv. point", "After equiv. point"],
+        "options": [
+          "Before titration",
+          "Before/after equiv. point (weak acid + conjugate base)",
+          "Exactly at equiv. point",
+          "After equiv. point"
+        ],
         "answer": 1,
         "explanation": "When a weak acid and its conjugate base (salt) coexist, the solution resists pH change — buffer action described by the Henderson–Hasselbalch equation."
       },
       "q4": {
         "question": "What is the pH at the equivalence point when 100 mL of 0.1 mol/L CH₃COOH (Ka = 1.8×10⁻⁵) is titrated with 0.1 mol/L NaOH?",
-        "options": ["pH = 7.0", "pH ≈ 8.9", "pH ≈ 5.1", "pH = 14"],
+        "options": [
+          "pH = 7.0",
+          "pH ≈ 8.9",
+          "pH ≈ 5.1",
+          "pH = 14"
+        ],
         "answer": 1,
         "explanation": "At the equivalence point, only CH₃COONa exists. Kb = Kw/Ka ≈ 5.6×10⁻¹⁰; [OH⁻] = √(0.1 × 5.6×10⁻¹⁰) ≈ 7.5×10⁻⁶ → pOH ≈ 5.1 → pH ≈ 8.9"
       }
@@ -109,7 +157,33 @@
     "incorrect": "Incorrect",
     "showAnswer": "Show explanation",
     "nextQuestion": "Next question",
-    "score": "Score"
+    "score": "Score",
+    "stages": {
+      "start": "Before",
+      "progress": "Neutralising",
+      "buffer": "Buffer",
+      "near": "Near equiv.",
+      "after": "Past equiv."
+    },
+    "stageLabel": "Titration progress",
+    "nowHere": "Now",
+    "cards": {
+      "overview": "This pairing",
+      "buffer": "Buffering",
+      "equivalence": "Equivalence",
+      "near": "Watch!",
+      "after": "After equivalence",
+      "indicator": "Indicator"
+    },
+    "currentIndicator": "Selected indicator",
+    "noIndicator": "No indicator selected. Pick one to see the colour change.",
+    "question": "Question",
+    "resultTitle": "Result",
+    "resultPerfect": "Perfect score! You are a titration master.",
+    "resultGood": "Nice work! Review the explanations and aim for a perfect score.",
+    "resultRetry": "Try it out in the simulator, then have another go.",
+    "retry": "Try again",
+    "seeResult": "See result"
   },
   "acids": {
     "HCl": "Hydrochloric acid (HCl)",
@@ -121,5 +195,87 @@
     "NaOH": "Sodium hydroxide (NaOH)",
     "KOH": "Potassium hydroxide (KOH)",
     "NH3": "Ammonia (NH₃)"
+  },
+  "nav": {
+    "help": "How to use",
+    "discoveries": "Discoveries",
+    "themeToggle": "Toggle theme",
+    "langToggle": "日本語に切り替え"
+  },
+  "welcome": {
+    "eyebrow": "Welcome to the lab",
+    "title": "Watch the colour change with a single drop",
+    "lead": "What happens to pH when you mix an acid and a base? Add titrant drop by drop and watch colour, curve and ions change together.",
+    "steps": [
+      {
+        "title": "Play",
+        "desc": "Press ▶ to start, or add “1 drop” at a time."
+      },
+      {
+        "title": "Observe",
+        "desc": "Watch the indicator colour and the sudden jump in the curve."
+      },
+      {
+        "title": "Compare",
+        "desc": "Swap acids, bases and indicators to spot differences."
+      },
+      {
+        "title": "Check",
+        "desc": "Test yourself with the quiz and discoveries."
+      }
+    ],
+    "cta": "Start a titration",
+    "dismiss": "Close"
+  },
+  "region": {
+    "acidic": "Acidic",
+    "neutral": "Neutral",
+    "basic": "Basic"
+  },
+  "discoveries": {
+    "title": "Discoveries",
+    "lead": "Collect all 9 discoveries as you experiment.",
+    "toast": "New discovery!",
+    "locked": "Locked",
+    "progress": "{{n}} / {{total}} found",
+    "typesProgress": "{{n}} / 4 types",
+    "items": {
+      "firstDrop": {
+        "title": "First drop",
+        "hint": "Start a titration with Play or “1 drop”."
+      },
+      "equivalence": {
+        "title": "Equivalence reached",
+        "hint": "Add titrant until acid and base exactly neutralise."
+      },
+      "colorChange": {
+        "title": "The colour switch",
+        "hint": "Choose an indicator and titrate across its range."
+      },
+      "rightIndicator": {
+        "title": "Perfect indicator",
+        "hint": "Pass the equivalence point using an indicator whose range contains its pH."
+      },
+      "buffer": {
+        "title": "Buffer spotted",
+        "hint": "Titrate a weak acid (or weak base) with a strong titrant."
+      },
+      "halfEquiv": {
+        "title": "Half-equivalence secret",
+        "hint": "Stop halfway to equivalence in a buffer. Is pH = pKa?"
+      },
+      "reverse": {
+        "title": "The other way round",
+        "hint": "Switch to “Base → Acid” and pass the equivalence point."
+      },
+      "allTypes": {
+        "title": "All four pairings",
+        "hint": "Pass equivalence for all four strong/weak combinations."
+      },
+      "quizPerfect": {
+        "title": "Quiz master",
+        "hint": "Answer every quiz question correctly."
+      }
+    }
   }
 }

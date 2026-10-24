@@ -1,12 +1,15 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSim } from '../context/SimContext'
 import { getIndicator } from '../data/indicators'
 import type { TitrationPoint } from '../lib/titration'
+import { PH_STOPS, phColor } from '../lib/phColor'
+import { hasBuffer, indicatorSuitable, maxVolume } from '../lib/stage'
+import { ChartIcon, CheckIcon, DownloadIcon, XIcon } from './Icons'
 
-const MARGIN = { top: 24, right: 20, bottom: 48, left: 48 }
-const W = 480
-const H = 280
+const MARGIN = { top: 18, right: 54, bottom: 44, left: 44 }
+const W = 520
+const H = 300
 const PLOT_W = W - MARGIN.left - MARGIN.right
 const PLOT_H = H - MARGIN.top - MARGIN.bottom
 
@@ -14,11 +17,12 @@ export default function TitrationCurve() {
   const { t } = useTranslation()
   const { state } = useSim()
   const [hoverPoint, setHoverPoint] = useState<TitrationPoint | null>(null)
+  const uid = useId().replace(/:/g, '')
 
   const { curve, addedVol, equivalencePoints, indicatorId } = state
   const indicator = getIndicator(indicatorId)
 
-  const maxX = curve[curve.length - 1]?.volume ?? state.equivVol * 2
+  const maxX = maxVolume(state)
 
   const toSvgX = useCallback((v: number) => MARGIN.left + (v / maxX) * PLOT_W, [maxX])
   const toSvgY = useCallback((ph: number) => MARGIN.top + PLOT_H - (ph / 14) * PLOT_H, [])
@@ -35,6 +39,12 @@ export default function TitrationCurve() {
       .map((p, i) => `${i === 0 ? 'M' : 'L'}${toSvgX(p.volume).toFixed(1)},${toSvgY(p.ph).toFixed(1)}`)
       .join(' ')
   }, [drawnPoints, toSvgX, toSvgY])
+
+  const areaD = useMemo(() => {
+    if (!pathD) return ''
+    const last = drawnPoints[drawnPoints.length - 1]
+    return `${pathD} L${toSvgX(last.volume).toFixed(1)},${MARGIN.top + PLOT_H} L${MARGIN.left},${MARGIN.top + PLOT_H} Z`
+  }, [pathD, drawnPoints, toSvgX])
 
   // Ghost full curve (dimmed)
   const ghostD = useMemo(() => {
@@ -56,12 +66,20 @@ export default function TitrationCurve() {
   const indBandY2 = toSvgY(indicator.pHLow)
 
   // Suitability
-  const suitable = equivalencePoints.some(
-    ep => ep.ph >= indicator.pHLow && ep.ph <= indicator.pHHigh,
-  )
+  const suitable = indicatorSuitable(state)
 
-  // Hover handler
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  // Half-equivalence point (pH ≈ pKa for weak acid / 14 − pKb for weak base)
+  const buffer = hasBuffer(state)
+  const halfEq = useMemo(() => {
+    if (!buffer) return null
+    const v = state.equivVol / 2
+    let best: TitrationPoint | null = null
+    for (const p of curve) if (!best || Math.abs(p.volume - v) < Math.abs(best.volume - v)) best = p
+    return best
+  }, [buffer, curve, state.equivVol])
+
+  // Hover / touch handler
+  const handlePointer = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const svgX = (e.clientX - rect.left) / (rect.width / W)
     const xVol = ((svgX - MARGIN.left) / PLOT_W) * maxX
@@ -76,40 +94,98 @@ export default function TitrationCurve() {
     setHoverPoint(nearest)
   }
 
+  const handleExportCsv = () => {
+    const rows = [
+      ['volume_mL', 'pH'],
+      ...state.curve
+        .filter(p => p.volume <= state.addedVol + 0.001)
+        .map(p => [p.volume.toFixed(2), p.ph.toFixed(4)]),
+    ]
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `titration_${state.acidId}_${state.baseId}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const cur = { x: toSvgX(addedVol), y: toSvgY(state.currentPH) }
+
+  // Tooltip placement, kept inside the plot
+  const tip = hoverPoint && (() => {
+    const hx = toSvgX(hoverPoint.volume)
+    const hy = toSvgY(hoverPoint.ph)
+    const tw = 96, th = 36
+    const tx = hx + 10 + tw > W - 4 ? hx - 10 - tw : hx + 10
+    const ty = Math.max(MARGIN.top, Math.min(MARGIN.top + PLOT_H - th, hy - th - 6))
+    return { hx, hy, tx, ty, tw, th }
+  })()
+
   return (
-    <div
-      className="flex flex-col h-full p-2"
-      style={{ background: 'var(--color-surface)', color: 'var(--color-text)' }}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-semibold">{t('graph.title')}</span>
-        {indicatorId !== 'none' && (
-          <span
-            className="text-xs px-2 py-0.5 rounded"
-            style={{ background: suitable ? '#22c55e22' : '#ef444422', color: suitable ? '#16a34a' : '#dc2626' }}
+    <div className="card flex flex-col h-full p-3 sm:p-4" style={{ color: 'var(--color-text)' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <h2 className="card-title m-0">
+          <span className="card-title-icon"><ChartIcon size={16} /></span>
+          {t('graph.title')}
+        </h2>
+        <div className="flex items-center gap-2">
+          {indicatorId !== 'none' && (
+            <span className={`chip ${suitable ? 'chip-success' : 'chip-danger'}`} key={`${indicatorId}-${suitable}`}>
+              <span className="anim-pop inline-flex">{suitable ? <CheckIcon size={13} strokeWidth={3} /> : <XIcon size={13} strokeWidth={3} />}</span>
+              {t(indicator.nameKey)} : {suitable ? t('graph.suitable') : t('graph.unsuitable')}
+            </span>
+          )}
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={handleExportCsv}
+            disabled={state.addedVol < 0.01}
+            aria-label={t('graph.exportAria')}
+            title={t('graph.exportAria')}
           >
-            {suitable ? `✓ ${t('graph.suitable')}` : `✗ ${t('graph.unsuitable')}`}
-          </span>
-        )}
+            <DownloadIcon size={14} /> CSV
+          </button>
+        </div>
       </div>
 
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full flex-1"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setHoverPoint(null)}
-        style={{ overflow: 'visible' }}
+        className="w-full flex-1 select-none"
+        style={{ overflow: 'visible', touchAction: 'pan-y', minHeight: 200 }}
+        onPointerMove={handlePointer}
+        onPointerDown={handlePointer}
+        onPointerLeave={() => setHoverPoint(null)}
+        role="img"
+        aria-label={t('graph.ariaLabel')}
       >
+        <defs>
+          {/* pH-coloured stroke: gradient mapped to the y axis (pH 0 → 14) */}
+          <linearGradient id={`ph-${uid}`} gradientUnits="userSpaceOnUse" x1="0" y1={toSvgY(0)} x2="0" y2={toSvgY(14)}>
+            {PH_STOPS.map(([p, c]) => <stop key={p} offset={p / 14} stopColor={c} />)}
+          </linearGradient>
+          <linearGradient id={`area-${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--color-accent)" stopOpacity="0.14" />
+            <stop offset="1" stopColor="var(--color-accent)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
         {/* Indicator band */}
         {indicatorId !== 'none' && (
-          <rect
-            x={MARGIN.left}
-            y={indBandY1}
-            width={PLOT_W}
-            height={indBandY2 - indBandY1}
-            fill={indicator.colorBase}
-            opacity={0.18}
-          />
+          <g>
+            <rect
+              x={MARGIN.left}
+              y={indBandY1}
+              width={PLOT_W}
+              height={indBandY2 - indBandY1}
+              fill={indicator.colorBase}
+              opacity={0.16}
+              style={{ transition: 'y 0.4s ease, height 0.4s ease' }}
+            />
+            <text x={MARGIN.left + 6} y={indBandY1 - 4} fontSize={10.5} fontWeight={600} fill="currentColor" opacity={0.65}>
+              {t(indicator.nameKey)} {indicator.pHLow}–{indicator.pHHigh}
+            </text>
+          </g>
         )}
 
         {/* Grid lines */}
@@ -118,18 +194,37 @@ export default function TitrationCurve() {
             key={ph}
             x1={MARGIN.left} y1={toSvgY(ph)}
             x2={MARGIN.left + PLOT_W} y2={toSvgY(ph)}
-            stroke="currentColor" strokeOpacity={0.1} strokeWidth={ph === 7 ? 1.5 : 0.8}
+            stroke="currentColor" strokeOpacity={ph === 7 ? 0.22 : 0.08} strokeWidth={ph === 7 ? 1.2 : 0.8}
+            strokeDasharray={ph === 7 ? '4,4' : undefined}
           />
         ))}
 
+        {/* Region labels on the right */}
+        <g fontSize={10.5} fontWeight={700} textAnchor="start">
+          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(11)} fill={phColor(11)}>{t('region.basic')}</text>
+          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(7) + 4} fill={phColor(7)}>{t('region.neutral')}</text>
+          <text x={MARGIN.left + PLOT_W + 8} y={toSvgY(3)} fill={phColor(3)}>{t('region.acidic')}</text>
+        </g>
+
         {/* Ghost curve */}
         {ghostD && (
-          <path d={ghostD} fill="none" stroke="currentColor" strokeOpacity={0.12} strokeWidth={1.5} />
+          <path d={ghostD} fill="none" stroke="currentColor" strokeOpacity={0.16} strokeWidth={1.5} strokeDasharray="3,4" />
         )}
 
         {/* Live curve */}
+        {areaD && <path d={areaD} fill={`url(#area-${uid})`} />}
         {pathD && (
-          <path d={pathD} fill="none" stroke="var(--color-accent)" strokeWidth={2.5} strokeLinejoin="round" />
+          <path d={pathD} fill="none" stroke={`url(#ph-${uid})`} strokeWidth={3.5} strokeLinejoin="round" strokeLinecap="round" />
+        )}
+
+        {/* Half-equivalence marker */}
+        {halfEq && (
+          <g opacity={halfEq.volume <= addedVol ? 1 : 0.35} style={{ transition: 'opacity 0.3s' }}>
+            <circle cx={toSvgX(halfEq.volume)} cy={toSvgY(halfEq.ph)} r={4} fill="var(--color-surface)" stroke="var(--color-accent)" strokeWidth={2} />
+            <text x={toSvgX(halfEq.volume) - 6} y={toSvgY(halfEq.ph) - 9} fontSize={10.5} fontWeight={600} textAnchor="end" fill="var(--color-accent)">
+              {t('graph.halfEquivalence')} pH={halfEq.ph.toFixed(2)}
+            </text>
+          </g>
         )}
 
         {/* Equivalence point markers */}
@@ -138,10 +233,11 @@ export default function TitrationCurve() {
           const ey = toSvgY(ep.ph)
           const drawn = ep.volume <= addedVol
           return (
-            <g key={i} opacity={drawn ? 1 : 0.3}>
+            <g key={i} opacity={drawn ? 1 : 0.35} style={{ transition: 'opacity 0.3s' }}>
               <line x1={ex} y1={MARGIN.top} x2={ex} y2={MARGIN.top + PLOT_H} stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4,3" />
-              <circle cx={ex} cy={ey} r={5} fill="#f59e0b" />
-              <text x={ex + 6} y={ey - 6} fontSize={9} fill="#f59e0b">
+              {drawn && <circle cx={ex} cy={ey} r={6} fill="none" stroke="#f59e0b" strokeWidth={2} className="pulse-ring" />}
+              <circle cx={ex} cy={ey} r={5} fill="#f59e0b" stroke="var(--color-surface)" strokeWidth={1.5} />
+              <text x={ex + 8} y={ey + 14} fontSize={10.5} fontWeight={700} fill="#d97706">
                 {t('graph.equivalencePoint')} pH={ep.ph.toFixed(1)}
               </text>
             </g>
@@ -150,50 +246,47 @@ export default function TitrationCurve() {
 
         {/* Current position */}
         {drawnPoints.length > 0 && (
-          <circle
-            cx={toSvgX(addedVol)}
-            cy={toSvgY(state.currentPH)}
-            r={5}
-            fill="var(--color-accent)"
-            stroke="white"
-            strokeWidth={1.5}
-          />
+          <g>
+            <circle cx={cur.x} cy={cur.y} r={10} fill={phColor(state.currentPH)} opacity={0.22} />
+            <circle cx={cur.x} cy={cur.y} r={5.5} fill={phColor(state.currentPH)} stroke="var(--color-surface)" strokeWidth={2} />
+          </g>
         )}
 
         {/* Hover tooltip */}
-        {hoverPoint && (
-          <g>
+        {hoverPoint && tip && (
+          <g pointerEvents="none">
             <line
-              x1={toSvgX(hoverPoint.volume)} y1={MARGIN.top}
-              x2={toSvgX(hoverPoint.volume)} y2={MARGIN.top + PLOT_H}
-              stroke="currentColor" strokeOpacity={0.4} strokeWidth={1} strokeDasharray="3,2"
+              x1={tip.hx} y1={MARGIN.top}
+              x2={tip.hx} y2={MARGIN.top + PLOT_H}
+              stroke="currentColor" strokeOpacity={0.35} strokeWidth={1} strokeDasharray="3,2"
             />
-            <circle cx={toSvgX(hoverPoint.volume)} cy={toSvgY(hoverPoint.ph)} r={4} fill="currentColor" />
+            <circle cx={tip.hx} cy={tip.hy} r={4} fill={phColor(hoverPoint.ph)} stroke="var(--color-surface)" strokeWidth={1.5} />
             <rect
-              x={toSvgX(hoverPoint.volume) + 8} y={toSvgY(hoverPoint.ph) - 22}
-              width={90} height={28} rx={4}
+              x={tip.tx} y={tip.ty}
+              width={tip.tw} height={tip.th} rx={8}
               fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth={1}
+              style={{ filter: 'drop-shadow(0 4px 8px rgba(15,23,42,0.15))' }}
             />
-            <text x={toSvgX(hoverPoint.volume) + 13} y={toSvgY(hoverPoint.ph) - 10} fontSize={10} fill="currentColor">
-              {hoverPoint.volume.toFixed(1)} mL
+            <text x={tip.tx + 10} y={tip.ty + 15} fontSize={10.5} fill="currentColor" opacity={0.7}>
+              {hoverPoint.volume.toFixed(2)} mL
             </text>
-            <text x={toSvgX(hoverPoint.volume) + 13} y={toSvgY(hoverPoint.ph) + 2} fontSize={10} fill="var(--color-accent)">
+            <text x={tip.tx + 10} y={tip.ty + 29} fontSize={12} fontWeight={700} fill="currentColor">
               pH = {hoverPoint.ph.toFixed(2)}
             </text>
           </g>
         )}
 
         {/* Y axis */}
-        <line x1={MARGIN.left} y1={MARGIN.top} x2={MARGIN.left} y2={MARGIN.top + PLOT_H} stroke="currentColor" strokeOpacity={0.4} />
+        <line x1={MARGIN.left} y1={MARGIN.top} x2={MARGIN.left} y2={MARGIN.top + PLOT_H} stroke="currentColor" strokeOpacity={0.35} />
         {yTicks.map(ph => (
           <g key={ph}>
-            <line x1={MARGIN.left - 4} y1={toSvgY(ph)} x2={MARGIN.left} y2={toSvgY(ph)} stroke="currentColor" strokeOpacity={0.4} />
-            <text x={MARGIN.left - 6} y={toSvgY(ph) + 4} fontSize={10} textAnchor="end" fill="currentColor" opacity={0.6}>{ph}</text>
+            <line x1={MARGIN.left - 4} y1={toSvgY(ph)} x2={MARGIN.left} y2={toSvgY(ph)} stroke="currentColor" strokeOpacity={0.35} />
+            <text x={MARGIN.left - 7} y={toSvgY(ph) + 4} fontSize={11} textAnchor="end" fill="currentColor" opacity={0.6} className="tabular">{ph}</text>
           </g>
         ))}
         <text
           x={12} y={MARGIN.top + PLOT_H / 2}
-          fontSize={11} fill="currentColor" opacity={0.6}
+          fontSize={11.5} fontWeight={600} fill="currentColor" opacity={0.6}
           textAnchor="middle"
           transform={`rotate(-90, 12, ${MARGIN.top + PLOT_H / 2})`}
         >
@@ -201,27 +294,18 @@ export default function TitrationCurve() {
         </text>
 
         {/* X axis */}
-        <line x1={MARGIN.left} y1={MARGIN.top + PLOT_H} x2={MARGIN.left + PLOT_W} y2={MARGIN.top + PLOT_H} stroke="currentColor" strokeOpacity={0.4} />
+        <line x1={MARGIN.left} y1={MARGIN.top + PLOT_H} x2={MARGIN.left + PLOT_W} y2={MARGIN.top + PLOT_H} stroke="currentColor" strokeOpacity={0.35} />
         {xTicks.map(v => (
           <g key={v}>
-            <line x1={toSvgX(v)} y1={MARGIN.top + PLOT_H} x2={toSvgX(v)} y2={MARGIN.top + PLOT_H + 4} stroke="currentColor" strokeOpacity={0.4} />
-            <text x={toSvgX(v)} y={MARGIN.top + PLOT_H + 14} fontSize={10} textAnchor="middle" fill="currentColor" opacity={0.6}>{v}</text>
+            <line x1={toSvgX(v)} y1={MARGIN.top + PLOT_H} x2={toSvgX(v)} y2={MARGIN.top + PLOT_H + 4} stroke="currentColor" strokeOpacity={0.35} />
+            <text x={toSvgX(v)} y={MARGIN.top + PLOT_H + 16} fontSize={11} textAnchor="middle" fill="currentColor" opacity={0.6} className="tabular">{v}</text>
           </g>
         ))}
-        <text x={MARGIN.left + PLOT_W / 2} y={H - 4} fontSize={11} textAnchor="middle" fill="currentColor" opacity={0.6}>
+        <text x={MARGIN.left + PLOT_W / 2} y={H - 4} fontSize={11.5} fontWeight={600} textAnchor="middle" fill="currentColor" opacity={0.6}>
           {t('graph.xLabel')}
         </text>
-
-        {/* Indicator legend */}
-        {indicatorId !== 'none' && (
-          <g>
-            <rect x={MARGIN.left + PLOT_W - 120} y={MARGIN.top + 4} width={10} height={10} fill={indicator.colorBase} opacity={0.5} />
-            <text x={MARGIN.left + PLOT_W - 106} y={MARGIN.top + 13} fontSize={9} fill="currentColor" opacity={0.7}>
-              {t(indicator.nameKey)} {indicator.pHLow}–{indicator.pHHigh}
-            </text>
-          </g>
-        )}
       </svg>
+      <p className="text-[11px] m-0 mt-1 text-center" style={{ color: 'var(--color-text-muted)' }}>{t('graph.tapHint')}</p>
     </div>
   )
 }
